@@ -2,8 +2,9 @@ __pycache__
 _ext
 *.pyc
 *.so
-image_captioning_universal.egg-info/
+image_captioning.egg-info/
 coco-caption/
+coco-caption/*
 runs/
 save/
 build/

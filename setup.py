@@ -9,7 +9,7 @@ from setuptools import setup
 requirements = ['torch', 'torchvision']
 
 setup(
-    name='image_captioning_universal',
+    name='image_captioning',
     packages=find_packages(exclude=('configs', 'tests')),
     #install_requires=requirements
 )

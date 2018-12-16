@@ -9,6 +9,7 @@ from image_captioning.utils.imports import import_file
 from image_captioning.data.vocab import Vocab
 from image_captioning.utils.logger import setup_logger
 
+
 def build_vocab():
     logger = setup_logger("vocab")
     paths_catalog = import_file(
