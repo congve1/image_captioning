@@ -1,0 +1,13 @@
+DATASET:
+  TRAIN: "coco_2014_train_simple"
+  VAL: "coco_2014_val_simple"
+  TEST: "coco_2014_test_simple"
+SOLVER:
+  MAX_ITER: 100
+  STEPS: (30, 50)
+  CHECKPOINT_PERIOD: 20
+  LOG_PERIOD: 10
+MODEL:
+  DEVICE: 'cpu'
+  DECODER:
+    BEAM_SIZE: 3

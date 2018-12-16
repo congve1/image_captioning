@@ -1,0 +1,8 @@
+DATASET:
+  VAL: "coco_2014_online_val"
+  TEST: "coco_2014_online_test"
+MODEL:
+  WEIGHT: 'save/model_final.pth'
+  DEVICE: 'cpu'
+  DECODER:
+    BEAM_SIZE: 3

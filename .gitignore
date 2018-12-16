@@ -1,0 +1,29 @@
+__pycache__
+_ext
+*.pyc
+*.so
+image_captioning_universal.egg-info/
+coco-caption/
+runs/
+save/
+build/
+dist/
+datasets/*
+tests/MNIST
+*.pth
+*.pkl
+*.npy
+# Editor temporaries
+*.swn
+*.swo
+*.swp
+*~
+# Pycharm editor settings
+.idea
+# VScode editor settings
+.vscode
+#jupyter notebook checkpoints
+*.ipynb
+.ipynb_checkpoints
+/datasets
+/models
