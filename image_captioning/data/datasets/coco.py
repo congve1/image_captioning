@@ -39,7 +39,8 @@ class COCODataset(torch.utils.data.Dataset):
         cap_len = torch.tensor(self.encoded_captions_lens_flie[index], dtype=torch.long)
         all_captions = torch.tensor(
             self.encoded_captions_file[(index//self.seq_per_img)*self.seq_per_img:
-                                       ((index//self.seq_per_img)+1)*self.seq_per_img]
+                                       ((index//self.seq_per_img)+1)*self.seq_per_img],
+            dtype=torch.long
         )
         data = dict()
         data['att_feature'] = att_feature
