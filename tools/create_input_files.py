@@ -64,9 +64,11 @@ def create_input_files(args):
         img_paths = []
         captions = []
         coco_ids = []
+        logger.info("start loading annotation file {}".format(ann_file))
         with open(ann_file, 'r') as f:
             ann_file = json.load(f)
-        for image in ann_file['images']:
+        logger.info("annotation file {} loaded".format(ann_file))
+        for idx, image in enumerate(ann_file['images']):
             # getting all the captions tokens associate with the image
             img_captions = []
             for sentence in image['sentences']:
@@ -85,8 +87,11 @@ def create_input_files(args):
                 img_paths.append(path)
                 captions.append(img_captions)
                 coco_ids.append(image['cocoid'])
+            if (idx+1) % 1000 == 0:
+                logger.info("assign {}/{} images", idx+1, len(ann_file['images']))
+
         logger.info("assign {} imgs for split '{}' in dataset '{}'".format
-                    (len(img_paths),split,dataset))
+                    (len(img_paths), split, dataset))
         logger.info("assign {} sentences for split '{}' in dataset '{}'".format
                     (sum([len(img_captions) for img_captions in captions]),
                         split, dataset))
