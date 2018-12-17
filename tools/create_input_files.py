@@ -24,7 +24,7 @@ from image_captioning.utils.miscellaneous import encode_caption
 
 
 def create_input_files(args):
-    logger = setup_logger('CREATE_INPUTS')
+    logger = setup_logger('image_captioning')
     cfg.merge_from_list(args.opts)
     logger.info("merge options from list {}".format(args.opts))
     if args.config_file:

@@ -74,5 +74,7 @@ def load_state_dict(model, loaded_state_dict):
     # remove the "module" prefix before performing the matching
     loaded_state_dict = strip_prefix_if_present(loaded_state_dict, prefix="module.")
     align_and_update_state_dicts(model_state_dict, loaded_state_dict)
-
+    logger = logging.getLogger(__name__)
+    logger.info("start loading mode state_dict")
     model.load_state_dict(model_state_dict)
+    logger.info("model loaded")
