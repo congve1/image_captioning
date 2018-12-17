@@ -43,7 +43,8 @@ def create_input_files(args):
     weight_loader = ModelCheckpointer(cfg, encoder)
     url = ResNetCatalog.get(cfg.MODEL.ENCODER.CONV_BODY)
     weight_loader.load(url)
-    encoder.to(cfg.MODEL.DEVICE)
+    device = cfg.MODEL.DEVICE
+    encoder.to(device)
     seq_max_len = cfg.DATASET.SEQ_MAX_LEN
     seq_per_img = cfg.DATASET.SEQ_PER_IMG
     transform = build_transforms()
@@ -88,7 +89,7 @@ def create_input_files(args):
                 captions.append(img_captions)
                 coco_ids.append(image['cocoid'])
             if (idx+1) % 1000 == 0:
-                logger.info("assign {}/{} images", idx+1, len(ann_file['images']))
+                logger.info("assign {}/{} images".format(idx+1, len(ann_file['images'])))
 
         logger.info("assign {} imgs for split '{}' in dataset '{}'".format
                     (len(img_paths), split, dataset))
@@ -142,7 +143,7 @@ def create_input_files(args):
                 else:
                     captions_one_img = sample(captions[idy], k=seq_per_img)
                 image_captions.extend(captions_one_img)
-            imgs = torch.stack(imgs)
+            imgs = torch.stack(imgs).to(device)
             # get features
             with torch.no_grad():
                 fc, att = encoder(imgs)
