@@ -157,7 +157,7 @@ def create_input_files(args):
                 enc_cptions.append(encode_caption(vocab, cap))
                 caplens.append(c_len)
             logger.info(
-                "processing images: {}/{}. encoded captions. {}/{}"
+                "processed images: {}/{}. encoded captions. {}/{}"
                 .format(
                     (idx_end), img_nums,
                     (idx_end)*seq_per_img, img_nums*seq_per_img
