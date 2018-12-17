@@ -4,6 +4,7 @@ _ext
 *.so
 image_captioning.egg-info/
 coco-caption/
+eval_results/
 coco-caption/*
 runs/
 save/

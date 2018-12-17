@@ -32,7 +32,6 @@ class Checkpointer(object):
             return
         if not self.save_to_disk:
             return
-
         data = dict()
         data['model'] = self.model.state_dict()
         if self.optimizer is not None:

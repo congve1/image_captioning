@@ -38,6 +38,20 @@ class LanguageModelCriterion(nn.Module):
         return masks
 
     def forward(self, inputs, targets, cap_lens):
+        """
+        calculate word level cross entropy loss
+        Args:
+            inputs (torch(.cuda).FloatTensor): the input of the softmax, with size
+            batch_size X seq_length X vocab_size
+            targets (torch(.cuda).LongTensor): the ground truth word indexs, with
+            size batch_size X seq_length
+            cap_lens (torch(.cuda).LongTensor): the length of the captions.(with
+            <end> word includes)
+
+        Returns:
+            output: cross entropy loss
+
+        """
         batch_size = inputs.size(0)
         seq_size = inputs.size(1)
         masks = self.build_masks(batch_size, seq_size, cap_lens)

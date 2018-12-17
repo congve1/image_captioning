@@ -22,6 +22,16 @@ def encode_caption(vocab, caption):
 
 
 def decode_sequence(vocab, seq):
+    """
+    change tensor of word indexes to string
+    Args:
+        vocab (Voab):  the vocabulary contains the  mapping between word and index
+        seq (torch.(cuda).LongTensor): size (num_seqs, seq_length). The sequence
+        may contain <end> word
+
+    Returns:
+        out (list): a list of string that doesn't contain any <end> or <pad> words
+    """
     num_captions, length = seq.shape
     out = []
     for cap_ix in range(num_captions):
