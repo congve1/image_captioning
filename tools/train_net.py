@@ -27,7 +27,6 @@ def train(cfg):
 
     optimizer = make_optimizer(cfg, model)
     scheduler = make_lr_scheduler(cfg, optimizer)
-    criterion = LanguageModelCriterion()
 
     arguments = dict()
     arguments['iteration'] = 0
@@ -53,7 +52,6 @@ def train(cfg):
         train_data_loader,
         optimizer,
         scheduler,
-        criterion,
         checkpointer,
         device,
         checkpoint_period,
@@ -64,13 +62,14 @@ def train(cfg):
     return model
 
 
-def val(model, device, criterion):
+def val(model, device):
     dataset_name = cfg.DATASET.VAL
     vocab = get_vocab(dataset_name)
     val_data_loder = make_data_loader(
         cfg,
         split='val'
     )
+    criterion = LanguageModelCriterion()
     return inference(
         model,
         criterion,
