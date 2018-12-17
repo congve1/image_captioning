@@ -31,8 +31,8 @@ class LanguageModelCriterion(nn.Module):
     def __init__(self):
         super(LanguageModelCriterion, self).__init__()
 
-    def build_masks(self, batch_size, seq_len, cap_lens):
-        masks = torch.zeros((batch_size, seq_len))
+    def build_masks(self, batch_size, seq_len, cap_lens, device):
+        masks = torch.zeros((batch_size, seq_len)).to(device)
         for i in range(batch_size):
             masks[i, :cap_lens[i]] = torch.ones(cap_lens[i])
         return masks
@@ -54,7 +54,7 @@ class LanguageModelCriterion(nn.Module):
         """
         batch_size = inputs.size(0)
         seq_size = inputs.size(1)
-        masks = self.build_masks(batch_size, seq_size, cap_lens)
+        masks = self.build_masks(batch_size, seq_size, cap_lens, inputs.device)
         inputs = to_contiguous(inputs).view(-1, inputs.shape[-1])
         inputs = F.log_softmax(inputs, dim=1)
         targets = to_contiguous(targets).view(-1, 1)
