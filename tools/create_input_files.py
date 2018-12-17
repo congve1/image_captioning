@@ -67,7 +67,7 @@ def create_input_files(args):
         logger.info("start loading annotation file {}".format(ann_file))
         with open(ann_file, 'r') as f:
             ann_file = json.load(f)
-        logger.info("annotation file {} loaded".format(ann_file))
+        logger.info("annotation file loaded")
         for idx, image in enumerate(ann_file['images']):
             # getting all the captions tokens associate with the image
             img_captions = []
