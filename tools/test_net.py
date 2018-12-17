@@ -54,18 +54,21 @@ def main():
         "image_captioning.config.paths_catalog", cfg.PATHS_CATALOG, True
     )
     DatasetCatalog = paths_catalog.DatasetCatalog
-    ResNetCatlalog = paths_catalog.ResNetCatalog
+    ResNetCatalog = paths_catalog.ResNetCatalog
     # get data set
     dataset_val = DatasetCatalog.get(cfg.DATASET.VAL)
     dataset_test = DatasetCatalog.get(cfg.DATASET.TEST)
     vocab = get_vocab(cfg.DATASET.VAL)
     # build encoder
     encoder = build_encoder(cfg)
+    encoder_loader = ModelCheckpointer(cfg, encoder)
+    url = ResNetCatalog.get(cfg.MODEL.ENCODER.CONV_BODY)
+    encoder_loader.load(url)
     encoder = encoder.to(device)
     # build decoder
     decoder = build_decoder(cfg, vocab)
-    checkpointer = ModelCheckpointer(cfg, decoder)
-    checkpointer.load(cfg.MODEL.WEIGHT)
+    decoder_loader = ModelCheckpointer(cfg, decoder)
+    decoder_loader.load(cfg.MODEL.WEIGHT)
     decoder = decoder.to(device)
     # set to eval mode
     encoder.eval()

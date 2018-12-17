@@ -26,6 +26,13 @@ from image_captioning.utils.miscellaneous import encode_caption
 def create_input_files(args):
     logger = setup_logger('CREATE_INPUTS')
     cfg.merge_from_list(args.opts)
+    logger.info("merge options from list {}".format(args.opts))
+    if args.config_file:
+        cfg.merge_from_file(args.config_file)
+        logger.info("Loaded configuration file {}".format(args.config_file))
+        with open(args.config_file, 'r') as cf:
+            config_str = '\n' + cf.read()
+            logger.info(config_str)
     paths_catalog = import_file(
         'image_captioning.config.paths_catalog', cfg.PATHS_CATALOG, True
     )
@@ -36,6 +43,7 @@ def create_input_files(args):
     weight_loader = ModelCheckpointer(cfg, encoder)
     url = ResNetCatalog.get(cfg.MODEL.ENCODER.CONV_BODY)
     weight_loader.load(url)
+    encoder.to(cfg.MODEL.DEVICE)
     seq_max_len = cfg.DATASET.SEQ_MAX_LEN
     seq_per_img = cfg.DATASET.SEQ_PER_IMG
     transform = build_transforms()
@@ -64,6 +72,8 @@ def create_input_files(args):
             for sentence in image['sentences']:
                 if len(sentence['tokens']) <= seq_max_len:
                     img_captions.append(sentence['tokens'])
+                else:
+                    img_captions.append(sentence['tokens'][:seq_max_len])
             path = os.path.abspath(os.path.join(root, 
                                                 image['filepath'],
                                                 image['filename']))
@@ -103,7 +113,52 @@ def create_input_files(args):
         enc_cptions = []
         caplens = []
         seed(123)
+        batch_size = cfg.TEST.IMS_PER_BATCH
+        img_nums = len(img_paths)
         logger.info("start processing images and captions")
+        # batched processing
+        for idx in range(0, img_nums, batch_size):
+            idx_end = idx + batch_size
+            if idx_end > img_nums:
+                idx_end = img_nums
+            imgs = []
+            image_captions = []
+            for idy in range(idx, idx_end):
+                # get imgs
+                img = Image.open(img_paths[idy]).convert("RGB")
+                img = transform(img)
+                imgs.append(img)
+                # get captions
+                if (len(captions[idy])) < seq_per_img:
+                    captions_one_img = (
+                            captions[idy]
+                            + [choice(captions[idy]) for _ in range(seq_per_img - len(captions[idy]))]
+                    )
+                else:
+                    captions_one_img = sample(captions[idy], k=seq_per_img)
+                image_captions.extend(captions_one_img)
+            imgs = torch.stack(imgs)
+            # get features
+            with torch.no_grad():
+                fc, att = encoder(imgs)
+            att_dataset[idx: idx_end] = att.cpu().detach().numpy()
+            fc_dataset[idx: idx_end] = fc.cpu().detach().numpy()
+            # get encode captions and cap lens
+            for i, cap in enumerate(image_captions):
+                c_len = min(len(cap), seq_max_len)  # length without <start> <end> token
+                cap = ['<start>'] + cap + ['<end>'] + \
+                      ['<pad>' for _ in range(seq_max_len-c_len)]
+                enc_cptions.append(encode_caption(vocab, cap))
+                caplens.append(c_len)
+            logger.info(
+                "processing images: {}/{}. encoded captions. {}/{}"
+                .format(
+                    (idx_end), img_nums,
+                    (idx_end)*seq_per_img, img_nums*seq_per_img
+                )
+            )
+
+        """
         for idx, img_path in enumerate(img_paths):
             img = Image.open(img_path).convert('RGB')
             img = transform(img).unsqueeze(0)
@@ -129,6 +184,7 @@ def create_input_files(args):
                 "processing images: {}/{}. encoded captions. {}/{}"
                 .format(idx+1, len(img_paths), (idx+1)*seq_per_img, len(img_paths)*seq_per_img)
             )
+        """
         logger.info("writing encoded captions to file {}"
                     .format(encoded_captions_file))
         # Save encoded captions and their lengths to JSON files
@@ -142,6 +198,12 @@ def create_input_files(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '--config-file',
+        help='conifguration file that contains dataset names',
+        default='',
+        type=str
+    )
     parser.add_argument(
         'opts',
         help='Modify config options using the command-line',
