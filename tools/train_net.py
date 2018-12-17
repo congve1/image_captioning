@@ -104,13 +104,13 @@ def test(cfg, model):
         image_id = prediction['image_id']
         caption = prediction['caption']
         logger.info(
-            "image_id:{} sent:{}".format(
+            "image_id:{}\nsent:{}".format(
                 image_id, caption
             )
         )
     for metric, score in scores.items():
         logger.info(
-            "metirc {}, score: {}".format(
+            "metirc {}, score: {:.4f}".format(
                 metric, score
             )
         )

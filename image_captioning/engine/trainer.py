@@ -28,9 +28,10 @@ def do_train(
     start_iter = arguments['iteration']
     model.train()
     start_training_time = time.time()
-    end = time.time()
     ce_criterion = LanguageModelCriterion()
     criterion = ce_criterion
+    best_cider_score = -1000.0
+    end = time.time()
     for iteration, data in enumerate(train_data_loader, start_iter):
         data_time = time.time() - end
         iteration = iteration + 1
@@ -88,6 +89,10 @@ def do_train(
                     para_name, param.clone().cpu().data.numpy(), iteration
                 )
             model.train()
+            if scores['CIDEr'] > best_cider_score:
+                best_cider_score = scores['CIDEr']
+                logger.info("best cider score: {}".format(best_cider_score))
+                checkpointer.save('model_best')
         if iteration == max_iter:
             checkpointer.save('model_final', **arguments)
 
