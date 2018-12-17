@@ -11,6 +11,7 @@ class Decoder(nn.Module):
     def __init__(self, cfg, vocab):
         super(Decoder, self).__init__()
         self.vocab = vocab
+        self.device = cfg.MODEL.DEVICE
         self.num_layers = 2
         self.hidden_size = cfg.MODEL.DECODER.HIDDEN_SIZE
         self.dropout_prob = cfg.MODEL.DECODER.DROPOUT_PROB
@@ -42,11 +43,11 @@ class Decoder(nn.Module):
         h_init = torch.zeros(
             (self.num_layers, batch_size, self.hidden_size),
             dtype=weight.dtype
-        )
+        ).to(self.device)
         c_init = torch.zeros(
             (self.num_layers, batch_size, self.hidden_size),
             dtype=weight.dtype
-        )
+        ).to(self.device)
         return h_init, c_init
 
     def forward(self, fc_feats, att_feats, seq):
@@ -120,7 +121,6 @@ class Decoder(nn.Module):
 
     def beam_search(self, fc_feats, att_feats, beam_size):
         assert len(self.vocab) > beam_size, "assume beam size is smaller than vocab size"
-        device = fc_feats.device
         batch_size = fc_feats.size(0)
         att_feats = att_feats.permute(0, 2, 3, 1)
         locations = att_feats.numel() // att_feats.size(0) // att_feats.size(-1)
@@ -149,9 +149,9 @@ class Decoder(nn.Module):
             done_beams[k] = self._beam_search(
                 hidden_states, att_weights, log_probs, tmp_fc_feats, tmp_att_feats, beam_size
             )
-            seq[k, :] = done_beams[k][0]['seq'].to(device)# the first beam has highes cumulative score
-            seq_log_probs[k, :] = done_beams[k][0]['logps'].to(device)
-            weights[k, :] = done_beams[k][0]['att_weights'].to(device)
+            seq[k, :] = done_beams[k][0]['seq'].to(self.device)# the first beam has highes cumulative score
+            seq_log_probs[k, :] = done_beams[k][0]['logps'].to(self.device)
+            weights[k, :] = done_beams[k][0]['att_weights'].to(self.device)
         return seq, seq_log_probs, weights
 
     def _beam_search(self, hidden_states, att_weights, log_probs, fc_feats, att_feats, beam_size):

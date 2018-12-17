@@ -6,6 +6,7 @@ import torch.nn as nn
 from image_captioning.utils.metric_logger import MetricLogger
 from image_captioning.config import cfg
 from image_captioning.modeling.utils import clip_gradients
+from image_captioning.modeling.utils import LanguageModelCriterion
 
 
 def do_train(
@@ -13,7 +14,6 @@ def do_train(
         train_data_loader,
         optimizer,
         scheduler,
-        critieron,
         checkpointer,
         device,
         checkpoint_period,
@@ -29,6 +29,8 @@ def do_train(
     model.train()
     start_training_time = time.time()
     end = time.time()
+    ce_criterion = LanguageModelCriterion()
+    criterion = ce_criterion
     for iteration, data in enumerate(train_data_loader, start_iter):
         data_time = time.time() - end
         iteration = iteration + 1
@@ -42,7 +44,7 @@ def do_train(
         captions = data['captions'].to(device)
 
         outputs, weights = model(fc_features, att_features, captions)
-        loss = critieron(outputs, captions[:, 1:], cap_lens+1)
+        loss = criterion(outputs, captions[:, 1:], cap_lens+1)
         meters.add_scalar('loss', loss.item(), iteration)
         meters.update(loss=loss)
 
@@ -75,7 +77,7 @@ def do_train(
         # save model and do evaluation
         if iteration % checkpoint_period == 0:
             checkpointer.save('model_{:07d}'.format(iteration), **arguments)
-            val_loss, predictions, scores = val_function(model, device, critieron)
+            val_loss, predictions, scores = val_function(model, device)
             logger.info("validation loss:{:.4f}".format(val_loss))
             meters.add_scalar('val_loss', val_loss, iteration)
             for metric, score in scores.items():
