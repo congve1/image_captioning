@@ -53,6 +53,8 @@ def create_input_files(args):
     for dataset, split in [(cfg.DATASET.TRAIN, 'train'),
                            (cfg.DATASET.VAL, 'val'),
                            (cfg.DATASET.TEST, 'test')]:
+        if not dataset:
+            continue
         data = DatasetCatalog.get(dataset)
         root = data['args']['root']
         ann_file = data['args']['ann_file']
