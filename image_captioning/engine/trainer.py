@@ -91,7 +91,7 @@ def do_train(
             model.train()
             if scores['CIDEr'] > best_cider_score:
                 best_cider_score = scores['CIDEr']
-                logger.info("best cider score: {}".format(best_cider_score))
+                logger.info("best cider score: {:.4f}".format(best_cider_score))
                 checkpointer.save('model_best')
         if iteration == max_iter:
             checkpointer.save('model_final', **arguments)
