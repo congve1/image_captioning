@@ -3,8 +3,6 @@ import os
 import logging
 
 import torch
-import torch.multiprocessing
-torch.multiprocessing.set_start_method('spawn')
 
 from image_captioning.config import cfg
 from image_captioning.data import make_data_loader
