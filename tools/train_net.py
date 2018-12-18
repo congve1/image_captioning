@@ -166,5 +166,5 @@ def main():
 
 if __name__ == '__main__':
     import torch.multiprocessing
-    torch.multiprocessing.set_start_method('spwan', force=True)
+    torch.multiprocessing.set_start_method('spawn', force=True)
     main()
