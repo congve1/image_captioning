@@ -55,7 +55,6 @@ def do_train(
         optimizer.step()
 
         batch_time = time.time() - end
-        end = time.time()
         meters.update(time=batch_time, data=data_time)
         eta_seconds = meters.time.global_avg * (max_iter - iteration)
         eta_string = str(datetime.timedelta(seconds=int(eta_seconds)))
@@ -95,6 +94,7 @@ def do_train(
                 checkpointer.save('model_best')
         if iteration == max_iter:
             checkpointer.save('model_final', **arguments)
+        end = time.time()
 
     total_training_time = time.time() - start_training_time
     total_time_str = str(datetime.timedelta(seconds=total_training_time))

@@ -25,7 +25,6 @@ from image_captioning.utils.miscellaneous import encode_caption
 
 def create_input_files(args):
     logger = setup_logger('image_captioning')
-    cfg.merge_from_list(args.opts)
     logger.info("merge options from list {}".format(args.opts))
     if args.config_file:
         cfg.merge_from_file(args.config_file)
@@ -33,6 +32,7 @@ def create_input_files(args):
         with open(args.config_file, 'r') as cf:
             config_str = '\n' + cf.read()
             logger.info(config_str)
+    cfg.merge_from_list(args.opts)
     paths_catalog = import_file(
         'image_captioning.config.paths_catalog', cfg.PATHS_CATALOG, True
     )
