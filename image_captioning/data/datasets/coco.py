@@ -19,9 +19,9 @@ class COCODataset(torch.utils.data.Dataset):
     ):
         self.root = root
         self.seq_per_img = seq_per_img
-        att_features_file = h5py.File(att_features_file, 'r', swmr=True)
+        att_features_file = h5py.File(att_features_file, 'r', libver='latest', swmr=True)
         self.att_features_dataset = att_features_file['att_features']
-        fc_features_file = h5py.File(fc_features_file, 'r', swmr=True)
+        fc_features_file = h5py.File(fc_features_file, 'r', libver='latest', swmr=True)
         self.fc_features_dataset = fc_features_file['fc_features']
         self.cocoid_dataset = fc_features_file['cocoids']
 
