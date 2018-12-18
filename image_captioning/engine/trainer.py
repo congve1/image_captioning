@@ -56,7 +56,7 @@ def do_train(
         batch_time = time.time() - end
         meters.update(loss=loss)
         meters.update(batch_time=batch_time, data=data_time)
-        eta_seconds = meters.time.global_avg * (max_iter - iteration)
+        eta_seconds = meters.batch_time.global_avg * (max_iter - iteration)
         eta_string = str(datetime.timedelta(seconds=int(eta_seconds)))
         if iteration % log_period == 0 or iteration == max_iter:
             logger.info(
