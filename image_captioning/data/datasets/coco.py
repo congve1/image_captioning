@@ -50,15 +50,15 @@ class COCODataset(torch.utils.data.dataset.Dataset):
         )
         cocoid = int(cocoid_dataset[index//self.seq_per_img])
         """
-        self.att_features_dataset.refresh()
+        self.att_features_dataset.id.refresh()
         att_feature = torch.from_numpy(
             self.att_features_dataset[index//self.seq_per_img]
         )
-        self.fc_features_dataset.refresh()
+        self.fc_features_dataset.id.refresh()
         fc_feature = torch.from_numpy(
             self.fc_features_dataset[index//self.seq_per_img]
         )
-        self.cocoid_dataset.refresh()
+        self.cocoid_dataset.id.refresh()
         cocoid = int(self.cocoid_dataset[index//self.seq_per_img])
 
         caption = torch.tensor(self.encoded_captions_file[index], dtype=torch.long)
