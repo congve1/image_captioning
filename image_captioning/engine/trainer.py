@@ -53,8 +53,8 @@ def do_train(
         optimizer.step()
 
         batch_time = time.time() - end
-        meters.update(time=batch_time, data=data_time)
         meters.update(loss=loss)
+        meters.update(time=batch_time, data=data_time)
         eta_seconds = meters.time.global_avg * (max_iter - iteration)
         eta_string = str(datetime.timedelta(seconds=int(eta_seconds)))
         if iteration % log_period == 0 or iteration == max_iter:
@@ -73,7 +73,7 @@ def do_train(
                     lr=optimizer.param_groups[0]['lr'],
                 )
             )
-        meters.add_scalar('loss', loss.item(), iteration)
+        #meters.add_scalar('loss', loss.item(), iteration)
         # save model and do evaluation
         if iteration % checkpoint_period == 0:
             checkpointer.save('model_{:07d}'.format(iteration), **arguments)
