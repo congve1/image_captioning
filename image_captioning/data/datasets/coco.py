@@ -3,6 +3,9 @@ import json
 
 import torch
 import h5py
+import logging
+import time
+
 
 class COCODataset(torch.utils.data.Dataset):
     def __init__(
@@ -24,11 +27,16 @@ class COCODataset(torch.utils.data.Dataset):
             self.encoded_captions_lens_flie = json.load(f)
 
     def __getitem__(self, index):
+        logger = logging.getLogger("image_captioning.dataset")
+        start = time.time()
         att_features_file = h5py.File(self.att_features_file, 'r')
         att_features_dataset = att_features_file['att_features']
         fc_features_file = h5py.File(self.fc_features_file, 'r')
         fc_features_dataset = fc_features_file['fc_features']
         cocoid_dataset = fc_features_file['cocoids']
+        end = time.time() - start
+        logger.info("open h5py file cost: {}".format(end))
+        start = time.time()
         att_feature = torch.from_numpy(
             att_features_dataset[index//self.seq_per_img]
         )
@@ -52,6 +60,8 @@ class COCODataset(torch.utils.data.Dataset):
         data['cocoid'] = cocoid
         att_features_file.close()
         fc_features_file.close()
+        end = time.time() - start
+        logger.info("assigning data cost: {}".format(end))
         return data
 
     def __len__(self):
