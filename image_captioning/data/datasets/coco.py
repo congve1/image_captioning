@@ -18,8 +18,6 @@ class COCODataset(torch.utils.data.Dataset):
         self.seq_per_img = seq_per_img
         self.att_features_file = att_features_file
         self.fc_features_file = fc_features_file
-        self.att_features_dataset = att_features_file['att_features']
-        self.fc_features_dataset = fc_features_file['fc_features']
         self.cocoid_dataset = fc_features_file['cocoids']
         with open(encoded_captions_file, 'r') as f:
             self.encoded_captions_file = json.load(f)
