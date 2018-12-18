@@ -1,6 +1,4 @@
 import torch
-import time
-import logging
 
 class BatchCollator(object):
     """
@@ -18,8 +16,6 @@ class BatchCollator(object):
             A dict with the batched data
 
         """
-        logger = logging.getLogger("image_captioning.collat_batch")
-        start = time.time()
         att_features = []
         fc_features = []
         captions = []
@@ -47,8 +43,6 @@ class BatchCollator(object):
         data['cap_lens'] = cap_lens
         data['all_captions'] = all_captions
         data['cocoids'] = cocoids
-        end = time.time() - start
-        logger.info("collate batch cost: {}".format(end))
 
         return data
 
