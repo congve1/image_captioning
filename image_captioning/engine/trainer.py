@@ -46,8 +46,6 @@ def do_train(
 
         outputs, weights = model(fc_features, att_features, captions)
         loss = criterion(outputs, captions[:, 1:], cap_lens+1)
-        meters.add_scalar('loss', loss.item(), iteration)
-        meters.update(loss=loss)
 
         optimizer.zero_grad()
         loss.backward()
@@ -56,6 +54,7 @@ def do_train(
 
         batch_time = time.time() - end
         meters.update(time=batch_time, data=data_time)
+        meters.update(loss=loss)
         eta_seconds = meters.time.global_avg * (max_iter - iteration)
         eta_string = str(datetime.timedelta(seconds=int(eta_seconds)))
         if iteration % log_period == 0 or iteration == max_iter:
@@ -74,6 +73,7 @@ def do_train(
                     lr=optimizer.param_groups[0]['lr'],
                 )
             )
+        meters.add_scalar('loss', loss.item(), iteration)
         # save model and do evaluation
         if iteration % checkpoint_period == 0:
             checkpointer.save('model_{:07d}'.format(iteration), **arguments)
@@ -83,10 +83,6 @@ def do_train(
             for metric, score in scores.items():
                 logger.info("metric {}: {:.4f}".format(metric, score))
                 meters.add_scalar(metric, score, iteration)
-            for para_name, param in model.named_parameters():
-                meters.add_histogram(
-                    para_name, param.clone().cpu().data.numpy(), iteration
-                )
             model.train()
             if scores['CIDEr'] > best_cider_score:
                 best_cider_score = scores['CIDEr']
