@@ -34,7 +34,6 @@ def do_train(
     end = time.time()
     for iteration, data in enumerate(train_data_loader, start_iter):
         data_time = time.time() - end
-        end = time.time()
         iteration = iteration + 1
         arguments['iteration'] = iteration
 
