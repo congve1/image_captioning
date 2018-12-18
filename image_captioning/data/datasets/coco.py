@@ -3,7 +3,7 @@ import json
 
 import torch
 import h5py
-
+import time
 
 class COCODataset(torch.utils.data.Dataset):
     def __init__(
@@ -28,6 +28,7 @@ class COCODataset(torch.utils.data.Dataset):
             self.encoded_captions_lens_flie = json.load(f)
 
     def __getitem__(self, index):
+        start=time.time()
         att_feature = torch.from_numpy(
             self.att_features_dataset[index//self.seq_per_img]
         )
@@ -49,6 +50,8 @@ class COCODataset(torch.utils.data.Dataset):
         data['caption'] = caption
         data['all_captions'] = all_captions
         data['cocoid'] = cocoid
+        end = time.time() - start
+        print("get one item cost: {}".format(end))
         return data
 
     def __len__(self):

@@ -34,6 +34,7 @@ def do_train(
     end = time.time()
     for iteration, data in enumerate(train_data_loader, start_iter):
         data_time = time.time() - end
+        end = time.time()
         iteration = iteration + 1
         arguments['iteration'] = iteration
 
@@ -54,7 +55,7 @@ def do_train(
 
         batch_time = time.time() - end
         meters.update(loss=loss)
-        meters.update(time=batch_time, data=data_time)
+        meters.update(batch_time=batch_time, data=data_time)
         eta_seconds = meters.time.global_avg * (max_iter - iteration)
         eta_string = str(datetime.timedelta(seconds=int(eta_seconds)))
         if iteration % log_period == 0 or iteration == max_iter:
