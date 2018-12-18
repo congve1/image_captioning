@@ -87,7 +87,6 @@ def make_data_loader(cfg, split='train', start_iter=0):
         num_workers=num_workers,
         batch_sampler=batch_sampler,
         collate_fn=collator,
-        timeout=10
     )
 
     return dataloader
