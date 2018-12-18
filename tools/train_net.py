@@ -165,4 +165,6 @@ def main():
 
 
 if __name__ == '__main__':
+    import torch.multiprocessing
+    torch.multiprocessing.set_start_method('forkserver')
     main()
