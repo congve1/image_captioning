@@ -37,6 +37,7 @@ class COCODataset(torch.utils.data.Dataset):
 
     def __getitem__(self, index):
 
+        """
         att_features_file = h5py.File(self.att_features_file, 'r', libver='latest', swmr=True)
         att_features_dataset = att_features_file['att_features']
         fc_features_file = h5py.File(self.fc_features_file, 'r', libver='latest', swmr=True)
@@ -48,8 +49,8 @@ class COCODataset(torch.utils.data.Dataset):
             fc_features_dataset[index//self.seq_per_img]
         )
         cocoid = int(cocoid_dataset[index//self.seq_per_img])
-
         """
+
         att_feature = torch.from_numpy(
             self.att_features_dataset[index//self.seq_per_img]
         )
@@ -57,7 +58,6 @@ class COCODataset(torch.utils.data.Dataset):
             self.fc_features_dataset[index//self.seq_per_img]
         )
         cocoid = int(self.cocoid_dataset[index//self.seq_per_img])
-        """
 
         caption = torch.tensor(self.encoded_captions_file[index], dtype=torch.long)
         cap_len = torch.tensor(self.encoded_captions_lens_flie[index], dtype=torch.long)
@@ -66,8 +66,6 @@ class COCODataset(torch.utils.data.Dataset):
                                        ((index//self.seq_per_img)+1)*self.seq_per_img],
             dtype=torch.long
         )
-        att_features_file.close()
-        fc_features_file.close()
         data = dict()
         data['att_feature'] = att_feature
         data['fc_feature'] = fc_feature
