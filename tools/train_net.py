@@ -151,8 +151,8 @@ def main():
     logger = setup_logger('image_captioning', output_dir)
     logger.info(args)
 
-    logger.info("Collecting env info (might take some time)")
-    logger.info("\n" + collect_env_info())
+    #logger.info("Collecting env info (might take some time)")
+    #logger.info("\n" + collect_env_info())
 
     if args.config_file:
         logger.info("Loaded configuration file {}".format(args.config_file))

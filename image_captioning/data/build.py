@@ -82,11 +82,12 @@ def make_data_loader(cfg, split='train', start_iter=0):
     )
     num_workers = cfg.DATALOADER.NUM_WORKERS
     collator = BatchCollator()
-    dataloader = torch.utils.data.DataLoader(
+    dataloader = torch.utils.data.dataloader.DataLoader(
         dataset,
         num_workers=num_workers,
         batch_sampler=batch_sampler,
-        collate_fn=collator
+        collate_fn=collator,
+        timeout=10
     )
 
     return dataloader

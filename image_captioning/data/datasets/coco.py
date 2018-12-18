@@ -7,7 +7,7 @@ import logging
 import time
 
 
-class COCODataset(torch.utils.data.Dataset):
+class COCODataset(torch.utils.data.dataset.Dataset):
     def __init__(
         self,
         root,
