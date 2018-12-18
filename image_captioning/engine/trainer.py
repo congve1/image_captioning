@@ -73,7 +73,7 @@ def do_train(
                     lr=optimizer.param_groups[0]['lr'],
                 )
             )
-        #meters.add_scalar('loss', loss.item(), iteration)
+        meters.add_scalar('loss', loss.item(), iteration)
         # save model and do evaluation
         if iteration % checkpoint_period == 0:
             checkpointer.save('model_{:07d}'.format(iteration), **arguments)
