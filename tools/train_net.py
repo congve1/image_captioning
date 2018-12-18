@@ -5,6 +5,7 @@ import logging
 import torch
 import torch.multiprocessing
 torch.multiprocessing.set_start_method('forkserver')
+
 from image_captioning.config import cfg
 from image_captioning.data import make_data_loader
 from image_captioning.solver import make_optimizer
