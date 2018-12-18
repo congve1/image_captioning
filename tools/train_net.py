@@ -3,8 +3,7 @@ import os
 import logging
 
 import torch
-import torch.multiprocessing
-torch.multiprocessing.set_start_method('forkserver')
+
 
 from image_captioning.config import cfg
 from image_captioning.data import make_data_loader
@@ -166,4 +165,6 @@ def main():
 
 
 if __name__ == '__main__':
+    import torch.multiprocessing
+    torch.multiprocessing.set_start_method('spwan')
     main()
