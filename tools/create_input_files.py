@@ -149,8 +149,10 @@ def create_input_files(args):
                 fc_feature_path = os.path.abspath((
                    os.path.join(fc_features_folder, file_name+'_fc_feature.pt')
                 ))
-                torch.save(att[feature_idx], att_feature_path)
-                torch.save(fc[feature_idx], fc_feature_path)
+                att_feature = att[feature_idx].clone()
+                fc_feature = fc[feature_idx].clone()
+                torch.save(att_feature, att_feature_path)
+                torch.save(fc_feature, fc_feature_path)
                 att_features_paths.append(att_feature_path)
                 fc_features_paths.append(fc_feature_path)
             # get encode captions and cap lens
