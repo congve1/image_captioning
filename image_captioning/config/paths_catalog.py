@@ -7,59 +7,66 @@ class DatasetCatalog(object):
     DATASETS = {
         "coco_2014": {
             "img_dir": "coco",
-            "ann_file": "coco/annotations/dataset_coco.json",
-            'att_features_file': "coco/coco_2014_att_features.h5",
-            'fc_features_file' : 'coco/coco_2014_fc_features.h5',
-            'encoded_captions_file': 'coco/coco_2014_captions.json',
-            'encoded_captions_lens_file': 'coco/coco_2014_captions_lens.json'
+            "ann_file": "annotations/dataset_coco.json",
+            'att_features_paths_file': "coco_2014_att_features_paths.json",
+            'fc_features_paths_file': 'coco_2014_fc_features_paths.json',
+            'encoded_captions_file': 'coco_2014_captions.pt',
+            'encoded_captions_lens_file': 'co/coco_2014_captions_lens.pt',
+            "cocoids_file": "coco_2014_cocoids.json",
         },
         "coco_2014_train": {
             "img_dir": "coco",
-            "ann_file": "coco/annotations/dataset_coco.json",
-            'att_features_file': "coco/coco_2014_att_features_train.h5",
-            'fc_features_file' : 'coco/coco_2014_fc_features_train.h5',
-            'encoded_captions_file': 'coco/coco_2014_captions_train.json',
-            'encoded_captions_lens_file': 'coco/coco_2014_captions_lens_train.json'
+            "ann_file": "annotations/dataset_coco.json",
+            'att_features_paths_file': "coco_2014_att_features_train_paths.json",
+            'fc_features_paths_file': 'coco_2014_fc_features_train_paths.json',
+            'encoded_captions_file': 'coco_2014_captions_train.pt',
+            'encoded_captions_lens_file': 'coco_2014_captions_lens_train.pt',
+            "cocoids_file": "coco_2014_cocoids_train.json",
         },
         "coco_2014_val": {
             "img_dir": "coco",
-            "ann_file": "coco/annotations/dataset_coco.json",
-            'att_features_file': "coco/coco_2014_att_features_val.h5",
-            'fc_features_file' : 'coco/coco_2014_fc_features_val.h5',
-            'encoded_captions_file': 'coco/coco_2014_captions_val.json',
-            'encoded_captions_lens_file': 'coco/coco_2014_captions_lens_val.json'
+            "ann_file": "annotations/dataset_coco.json",
+            'att_features_paths_file': "coco_2014_att_features_val_paths.json",
+            'fc_features_paths_file': 'coco_2014_fc_features_val_paths.json',
+            'encoded_captions_file': 'coco_2014_captions_val.pt',
+            'encoded_captions_lens_file': 'coco_2014_captions_lens_val.pt',
+            "cocoids_file": "coco_2014_cocoids_val.json",
         },
         "coco_2014_test": {
             "img_dir": "coco",
-            "ann_file": "coco/annotations/dataset_coco.json",
-            'att_features_file': "coco/coco_2014_att_features_test.h5",
-            'fc_features_file' : 'coco/coco_2014_fc_features_test.h5',
-            'encoded_captions_file': 'coco/coco_2014_captions_test.json',
-            'encoded_captions_lens_file': 'coco/coco_2014_captions_lens_test.json'
+            "ann_file": "annotations/dataset_coco.json",
+            'att_features_paths_file': "coco_2014_att_features_test_paths.json",
+            'fc_features_paths_file': 'coco_2014_fc_features_test_paths.json',
+            'encoded_captions_file': 'coco_2014_captions_test.pt',
+            'encoded_captions_lens_file': 'coco_2014_captions_lens_test.pt',
+            "cocoids_file": "coco_2014_cocoids_test.json",
         },
         "coco_2014_train_simple": {
             "img_dir": "coco",
-            "ann_file": "coco/annotations/dataset_coco_simple.json",
-            'att_features_file': "coco/coco_2014_att_features_train_simple.h5",
-            'fc_features_file' : 'coco/coco_2014_fc_features_train_simple.h5',
-            'encoded_captions_file': 'coco/coco_2014_captions_train_simpe.json',
-            'encoded_captions_lens_file': 'coco/coco_2014_captions_lens_train_simple.json'
+            "ann_file": "annotations/dataset_coco_simple.json",
+            'att_features_paths_file': "coco_2014_att_features_train_simple_paths.json",
+            'fc_features_paths_file' : 'coco_2014_fc_features_train_simple_paths.json',
+            'encoded_captions_file': 'coco_2014_captions_train_simpe.pt',
+            'encoded_captions_lens_file': 'coco_2014_captions_lens_train_simple.pt',
+            "cocoids_file": "coco_2014_cocoids_train_simple.json",
         },
         "coco_2014_val_simple": {
             "img_dir": "coco",
-            "ann_file": "coco/annotations/dataset_coco_simple.json",
-            'att_features_file': "coco/coco_2014_att_features_val_simple.h5",
-            'fc_features_file' : 'coco/coco_2014_fc_features_val_simple.h5',
-            'encoded_captions_file': 'coco/coco_2014_captions_val_simple.json',
-            'encoded_captions_lens_file': 'coco/coco_2014_captions_lens_val_simple.json'
+            "ann_file": "annotations/dataset_coco_simple.json",
+            'att_features_paths_file': "coco_2014_att_features_val_simple_paths.json",
+            'fc_features_paths_file' : 'coco_2014_fc_features_val_simple_paths.json',
+            'encoded_captions_file': 'coco_2014_captions_val_simple.pt',
+            'encoded_captions_lens_file': 'coco_2014_captions_lens_val_simple.pt',
+            "cocoids_file": "coco_2014_cocoids_val_simple.json",
         },
         "coco_2014_test_simple": {
             "img_dir": "coco",
-            "ann_file": "coco/annotations/dataset_coco_simple.json",
-            'att_features_file': "coco/coco_2014_att_features_test_simple.h5",
-            'fc_features_file' : 'coco/coco_2014_fc_features_test_simple.h5',
-            'encoded_captions_file': 'coco/coco_2014_captions_test_simple.json',
-            'encoded_captions_lens_file': 'coco/coco_2014_captions_lens_test_simple.json'
+            "ann_file": "annotations/dataset_coco_simple.json",
+            'att_features_paths_file': "coco_2014_att_features_test_simple_paths.json",
+            'fc_features_paths_file': 'coco_2014_fc_features_test_simple_paths.json',
+            'encoded_captions_file': 'coco_2014_captions_test_simple.pt',
+            'encoded_captions_lens_file': 'coco_2014_captions_lens_test_simple.pt',
+            "cocoids_file": "coco_2014_cocoids_test.json",
         },
         "coco_2014_online_test": {
             "img_dir": "coco/test2014",
@@ -75,6 +82,7 @@ class DatasetCatalog(object):
     def get(name):
         data_dir = DatasetCatalog.DATA_DIR
         attrs = DatasetCatalog.DATASETS[name]
+        img_dir =attrs['img_dir']
         if 'online' in name:
             args = dict(
                 root=os.path.abspath(os.path.join(data_dir, attrs['img_dir'])),
@@ -88,13 +96,23 @@ class DatasetCatalog(object):
 
             args = dict(
                 root=os.path.abspath(os.path.join(data_dir, attrs['img_dir'])),
-                ann_file=os.path.abspath(os.path.join(data_dir, attrs['ann_file'])),
-                att_features_file = os.path.abspath(os.path.join(data_dir, attrs['att_features_file'])),
-                fc_features_file = os.path.abspath(os.path.join(data_dir, attrs['fc_features_file'])),
-                encoded_captions_file = os.path.abspath(os.path.join(data_dir, 
-                                                                    attrs['encoded_captions_file'])),
-                encoded_captions_lens_file = os.path.abspath(os.path.join(data_dir,
-                                                                    attrs['encoded_captions_lens_file']))
+                ann_file=os.path.abspath(os.path.join(data_dir, img_dir, attrs['ann_file'])),
+                att_features_paths_file=os.path.abspath(
+                    os.path.join(data_dir, img_dir, attrs['att_features_paths_file'])
+                ),
+                fc_features_paths_file=os.path.abspath(
+                    os.path.join(data_dir, img_dir, attrs['fc_features_paths_file'])
+                ),
+                encoded_captions_file=os.path.abspath(
+                    os.path.join(data_dir, img_dir, attrs['encoded_captions_file'])
+                ),
+                encoded_captions_lens_file=os.path.abspath(
+                    os.path.join(data_dir, img_dir, attrs['encoded_captions_lens_file'])
+                ),
+                cocoids_file=os.path.abspath(
+                    os.path.join(data_dir, img_dir, attrs['cocoids_file'])
+                ),
+
 
             )
             return dict(

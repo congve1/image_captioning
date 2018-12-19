@@ -1,13 +1,15 @@
 import torch
 import torch.nn as nn
 from torch.nn import functional as F
-from .decoder_atttion import Attention
 from image_captioning.modeling.utils import cat
+from image_captioning.modeling import registry
+from image_captioning.modeling.decoder.build import build_decoder_attention
 
 
-class DecoderCore(nn.Module):
+@registry.DECODER_CORES.register("TopDownCore")
+class TopDownCore(nn.Module):
     def __init__(self, cfg, vocab):
-        super(DecoderCore, self).__init__()
+        super(TopDownCore, self).__init__()
         self.dropout_prob = cfg.MODEL.DECODER.DROPOUT_PROB
         self.vocab = vocab
         embedding_size = cfg.MODEL.DECODER.EMBEDDING_SIZE
@@ -19,7 +21,7 @@ class DecoderCore(nn.Module):
             hidden_size * 2, hidden_size
         )
         self.logit = nn.Linear(hidden_size, len(vocab))
-        self.attention = Attention(cfg)
+        self.attention = build_decoder_attention(cfg)
         self._init_weights()
 
     def forward(self, xt, fc_feats, att_feats, hidden_states):

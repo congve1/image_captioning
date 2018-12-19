@@ -3,10 +3,10 @@ import unittest
 import torch
 
 from image_captioning.config import cfg
-from image_captioning.modeling.decoder.decoder_atttion import Attention
-from image_captioning.modeling.decoder.decoder_core import DecoderCore
-from image_captioning.modeling.decoder.decoder import Decoder
 from image_captioning.utils.get_vocab import get_vocab
+from image_captioning.modeling.decoder import build_decoder
+from image_captioning.modeling.decoder import build_decoder_core
+from image_captioning.modeling.decoder import build_decoder_attention
 
 
 class TestDecoder(unittest.TestCase):
@@ -75,7 +75,7 @@ class TestDecoder(unittest.TestCase):
         )
 
     def test_attention(self):
-        attention = Attention(cfg)
+        attention = build_decoder_attention(cfg)
         dummy_att_features = self.get_dummy_att_features_p()
         dummy_h = self.get_dummy_h()
         a, w = attention(dummy_att_features, dummy_h)
@@ -93,7 +93,7 @@ class TestDecoder(unittest.TestCase):
         dummy_fc_features = self.get_dummy_fc_features_p()
         dummy_hiddens = self.get_dummy_hidden_states()
         dummy_xt = self.get_dummy_xt()
-        core = DecoderCore(cfg, TestDecoder.vocab)
+        core = build_decoder_core(cfg, TestDecoder.vocab)
         output, hidden_states, weights = core(
             dummy_xt, dummy_fc_features, dummy_att_features,
             dummy_hiddens
@@ -120,7 +120,9 @@ class TestDecoder(unittest.TestCase):
         dummy_att_features = self.get_dummy_att_features()
         seq = self.get_dummy_seq()
         vocab = TestDecoder.vocab
-        decoder = Decoder(cfg, vocab)
+        cfg.merge_from_list(['MODEL.DEVICE', 'cpu'])
+        decoder = build_decoder(cfg, vocab)
+
         outputs, weights = decoder(
             dummy_fc_features, dummy_att_features, seq
         )

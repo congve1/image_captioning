@@ -18,6 +18,7 @@ def do_train(
         device,
         checkpoint_period,
         log_period,
+        val_period,
         val_function,
         arguments
 ):
@@ -77,6 +78,8 @@ def do_train(
         # save model and do evaluation
         if iteration % checkpoint_period == 0:
             checkpointer.save('model_{:07d}'.format(iteration), **arguments)
+        # validate and save model
+        if iteration % val_period == 0:
             val_loss, predictions, scores = val_function(model, device)
             logger.info("validation loss:{:.4f}".format(val_loss))
             meters.add_scalar('val_loss', val_loss, iteration)
@@ -87,9 +90,9 @@ def do_train(
             if scores['CIDEr'] > best_cider_score:
                 best_cider_score = scores['CIDEr']
                 logger.info("best cider score: {:.4f}".format(best_cider_score))
-                checkpointer.save('model_best')
+                checkpointer.save('model_best', save_last_checkpoint=False)
         if iteration == max_iter:
-            checkpointer.save('model_final', **arguments)
+            checkpointer.save('model_final')
         end = time.time()
 
     total_training_time = time.time() - start_training_time

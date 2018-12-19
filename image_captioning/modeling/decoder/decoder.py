@@ -2,9 +2,12 @@ import torch
 import torch.nn as nn
 from torch.nn import functional as F
 
-from image_captioning.utils.constant import  epsilon
+from image_captioning.utils.constant import epsilon
+from image_captioning.modeling.decoder.build import build_decoder_core
 
-from .decoder_core import DecoderCore
+
+def build_decoder(cfg, vocab):
+    return Decoder(cfg, vocab)
 
 
 class Decoder(nn.Module):
@@ -36,7 +39,7 @@ class Decoder(nn.Module):
             nn.ReLU(inplace=True),
             nn.Dropout(self.dropout_prob)
         )
-        self.core = DecoderCore(cfg, vocab)
+        self.core = build_decoder_core(cfg, vocab)
 
     def init_hiddens(self, batch_size):
         weight = next(self.parameters())

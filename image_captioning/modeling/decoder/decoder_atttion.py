@@ -1,11 +1,13 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from image_captioning.modeling import registry
 
 
-class Attention(nn.Module):
+@registry.DECODER_ATTENTIONS.register("TopDownAttention")
+class TopDownAttention(nn.Module):
     def __init__(self, cfg):
-        super(Attention, self).__init__()
+        super(TopDownAttention, self).__init__()
         att_hid_size = cfg.MODEL.DECODER.ATT_HIDDEN_SIZE
         hidden_size = cfg.MODEL.DECODER.HIDDEN_SIZE
 

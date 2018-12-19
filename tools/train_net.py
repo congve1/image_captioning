@@ -12,8 +12,8 @@ from image_captioning.solver import make_lr_scheduler
 from image_captioning.engine.trainer import do_train
 from image_captioning.engine.inference import inference
 from image_captioning.modeling.decoder import build_decoder
-from image_captioning.utils.checkpoint import  ModelCheckpointer
-from image_captioning.utils.get_vocab import  get_vocab
+from image_captioning.utils.checkpoint import ModelCheckpointer
+from image_captioning.utils.get_vocab import get_vocab
 from image_captioning.utils.collect_env import  collect_env_info
 from image_captioning.utils.logger import setup_logger
 from image_captioning.utils.miscellaneous import mkdir
@@ -47,6 +47,7 @@ def train(cfg):
 
     checkpoint_period = cfg.SOLVER.CHECKPOINT_PERIOD
     log_period = cfg.SOLVER.LOG_PERIOD
+    val_period = cfg.SOLVER.VAL_PERIOD
 
     do_train(
         model,
@@ -57,6 +58,7 @@ def train(cfg):
         device,
         checkpoint_period,
         log_period,
+        val_period,
         val,
         arguments,
     )

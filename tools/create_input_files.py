@@ -21,6 +21,7 @@ from image_captioning.modeling.encoder import build_encoder
 from image_captioning.utils.logger import setup_logger
 from image_captioning.data.transforms.build import build_transforms
 from image_captioning.utils.miscellaneous import encode_caption
+from image_captioning.utils.miscellaneous import mkdir
 
 
 def create_input_files(args):
@@ -58,15 +59,24 @@ def create_input_files(args):
         data = DatasetCatalog.get(dataset)
         root = data['args']['root']
         ann_file = data['args']['ann_file']
-        att_features_file = data['args']['att_features_file']
-        fc_features_file = data['args']['fc_features_file']
+        att_features_folder = os.path.abspath(os.path.join(root, dataset+"_att_features"))
+        fc_features_folder = os.path.abspath(os.path.join(root, dataset+'_fc_features'))
+        if not os.path.exists(att_features_folder):
+            mkdir(att_features_folder)
+        if not os.path.exists(fc_features_folder):
+            mkdir(fc_features_folder)
+        att_features_paths_file = data['args']['att_features_paths_file']
+        fc_features_paths_file = data['args']['fc_features_paths_file']
         encoded_captions_file = data['args']['encoded_captions_file']
         encoded_captions_lens_file = data['args']['encoded_captions_lens_file']
+        cocoids_file = data['args']['cocoids_file']
         vocab = get_vocab(dataset)
         logger.info("start processing dataset {}".format(dataset))
         img_paths = []
         captions = []
         coco_ids = []
+        att_features_paths = []
+        fc_features_paths = []
         logger.info("start loading annotation file {}".format(ann_file))
         with open(ann_file, 'r') as f:
             ann_file = json.load(f)
@@ -98,26 +108,7 @@ def create_input_files(args):
         logger.info("assign {} sentences for split '{}' in dataset '{}'".format
                     (sum([len(img_captions) for img_captions in captions]),
                         split, dataset))
-        logger.info("creating att features file {}"
-                    .format(att_features_file))
-        logger.info("creating fc features file {}"
-                    .format(fc_features_file))
         # write features into h5py file
-        att_features_file = h5py.File(att_features_file, 'w')
-        fc_features_file = h5py.File(fc_features_file, 'w')
-        
-        att_dataset = att_features_file.create_dataset(
-                        'att_features', 
-                        (len(img_paths),att_dim, att_size, att_size),
-                        dtype=np.float32)
-        fc_dataset = fc_features_file.create_dataset(
-                        'fc_features', (len(img_paths), att_dim),
-                        dtype=np.float32)
-        cocoid_dataset = fc_features_file.create_dataset(
-            'cocoids',
-            data=coco_ids,
-            dtype=np.int64
-        )
         enc_cptions = []
         caplens = []
         seed(123)
@@ -149,8 +140,19 @@ def create_input_files(args):
             # get features
             with torch.no_grad():
                 fc, att = encoder(imgs)
-            att_dataset[idx: idx_end] = att.cpu().detach().numpy()
-            fc_dataset[idx: idx_end] = fc.cpu().detach().numpy()
+            idx_list = list(range(idx, idx_end))
+            for feature_idx, path_idx in enumerate(idx_list):
+                file_name = os.path.basename(img_paths[path_idx]).split('.')[0]
+                att_feature_path = os.path.abspath(
+                    os.path.join(att_features_folder, file_name+"_att_feature.pt")
+                )
+                fc_feature_path = os.path.abspath((
+                   os.path.join(fc_features_folder, file_name+'_fc_feature.pt')
+                ))
+                torch.save(att[feature_idx], att_feature_path)
+                torch.save(fc[feature_idx], fc_feature_path)
+                att_features_paths.append(att_feature_path)
+                fc_features_paths.append(fc_feature_path)
             # get encode captions and cap lens
             for i, cap in enumerate(image_captions):
                 c_len = min(len(cap), seq_max_len)  # length without <start> <end> token
@@ -165,43 +167,28 @@ def create_input_files(args):
                     (idx_end)*seq_per_img, img_nums*seq_per_img
                 )
             )
+        enc_cptions = torch.tensor(enc_cptions, dtype=torch.long)
+        caplens = torch.tensor(caplens, dtype=torch.long)
+        logger.info("writing att feature paths to file {}"
+                    .format(fc_features_paths_file))
+        with open(att_features_paths_file, 'w') as f:
+            json.dump(att_features_paths, f)
 
-        """
-        for idx, img_path in enumerate(img_paths):
-            img = Image.open(img_path).convert('RGB')
-            img = transform(img).unsqueeze(0)
-            with torch.no_grad():
-                fc, att = encoder(img)
-            att_dataset[idx:idx+1] = att.cpu().detach().numpy()
-            fc_dataset[idx: idx+1] = fc.cpu().detach().numpy()
-            if len(captions[idx]) < seq_per_img:
-                image_captions = (
-                    captions[idx]
-                    + [choice(captions[idx]) for _ in range(seq_per_img-len(captions[idx]))]
-                )
-            else:
-                image_captions = sample(captions[idx], k=seq_per_img)
-            assert len(image_captions) == seq_per_img
-            for i, cap in enumerate(image_captions):
-                c_len = min(len(cap), seq_max_len)  # length without <start> <end> token
-                cap = ['<start>'] + cap + ['<end>'] + \
-                      ['<pad>' for _ in range(seq_max_len-c_len)]
-                enc_cptions.append(encode_caption(vocab, cap))
-                caplens.append(c_len)
-            logger.info(
-                "processing images: {}/{}. encoded captions. {}/{}"
-                .format(idx+1, len(img_paths), (idx+1)*seq_per_img, len(img_paths)*seq_per_img)
-            )
-        """
+        logger.info("writing fc feature paths to file {}"
+                    .format(att_features_paths_file))
+        with open(fc_features_paths_file, 'w') as f:
+            json.dump(fc_features_paths, f)
+        logger.info("writing coocids to fie {}"
+                    .format(cocoids_file))
+        with open(cocoids_file, 'w') as f:
+            json.dump(coco_ids, f)
         logger.info("writing encoded captions to file {}"
                     .format(encoded_captions_file))
         # Save encoded captions and their lengths to JSON files
-        with open(encoded_captions_file, 'w') as f:
-            json.dump(enc_cptions, f)
+        torch.save(enc_cptions, encoded_captions_file)
         logger.info("writing captions lengths to file {}"
                     .format(encoded_captions_lens_file))
-        with open(encoded_captions_lens_file, 'w') as f:
-            json.dump(caplens, f)
+        torch.save(caplens, encoded_captions_lens_file)
 
 
 if __name__ == '__main__':

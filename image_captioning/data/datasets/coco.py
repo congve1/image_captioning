@@ -11,60 +11,41 @@ class COCODataset(torch.utils.data.dataset.Dataset):
     def __init__(
         self,
         root,
-        att_features_file,
-        fc_features_file,
+        att_features_paths_file,
+        fc_features_paths_file,
         encoded_captions_file,
         encoded_captions_lens_file,
+        cocoids_file,
         seq_per_img
     ):
         self.root = root
         self.seq_per_img = seq_per_img
-        att_features_file = h5py.File(att_features_file, 'r', libver='latest', swmr=True)
-        self.att_features_dataset = att_features_file['att_features']
-        fc_features_file = h5py.File(fc_features_file, 'r', libver='latest', swmr=True)
-        self.fc_features_dataset = fc_features_file['fc_features']
-        self.cocoid_dataset = fc_features_file['cocoids']
-
-        """
-        self.att_features_file = att_features_file
-        self.fc_features_file = fc_features_file
-        """
-
-        with open(encoded_captions_file, 'r') as f:
-            self.encoded_captions_file = json.load(f)
-        with open(encoded_captions_lens_file, 'r') as f:
-            self.encoded_captions_lens_flie = json.load(f)
+        with open(att_features_paths_file, 'r') as f:
+            self.att_features_paths = json.load(f)
+        with open(fc_features_paths_file, 'r') as f:
+            self.fc_features_paths = json.load(f)
+        with open(cocoids_file, 'r') as f:
+            self.cocoids = json.load(f)
+        self.encoded_captions = torch.load(encoded_captions_file,
+                                           map_location='cpu')
+        self.encoded_captions_lens = torch.load(encoded_captions_lens_file,
+                                                map_location='cpu')
 
     def __getitem__(self, index):
 
-        """
-        att_features_file = h5py.File(self.att_features_file, 'r', libver='latest', swmr=True)
-        att_features_dataset = att_features_file['att_features']
-        fc_features_file = h5py.File(self.fc_features_file, 'r', libver='latest', swmr=True)
-        fc_features_dataset = fc_features_file['fc_features']
-        cocoid_dataset = fc_features_file['cocoids']
-        att_feature = torch.from_numpy(
-            att_features_dataset[index//self.seq_per_img]
-        fc_feature = torch.from_numpy(
-            fc_features_dataset[index//self.seq_per_img]
+        att_feature = torch.load(
+            self.att_features_paths[index//self.seq_per_img]
         )
-        cocoid = int(cocoid_dataset[index//self.seq_per_img])
-        """
-        att_feature = torch.from_numpy(
-            self.att_features_dataset[index//self.seq_per_img]
+        fc_feature = torch.load(
+            self.fc_features_paths[index//self.seq_per_img]
         )
-        fc_feature = torch.from_numpy(
-            self.fc_features_dataset[index//self.seq_per_img]
-        )
-        cocoid = int(self.cocoid_dataset[index//self.seq_per_img])
-
-        caption = torch.tensor(self.encoded_captions_file[index], dtype=torch.long)
-        cap_len = torch.tensor(self.encoded_captions_lens_flie[index], dtype=torch.long)
-        all_captions = torch.tensor(
-            self.encoded_captions_file[(index//self.seq_per_img)*self.seq_per_img:
-                                       ((index//self.seq_per_img)+1)*self.seq_per_img],
-            dtype=torch.long
-        )
+        cap_len = self.encoded_captions_lens[index]
+        caption = self.encoded_captions[index]
+        all_captions = self.encoded_captions[
+            (index//self.seq_per_img)*self.seq_per_img:
+            ((index//self.seq_per_img)+1)*self.seq_per_img
+        ]
+        cocoid = self.cocoids[index//self.seq_per_img]
         data = dict()
         data['att_feature'] = att_feature
         data['fc_feature'] = fc_feature
@@ -75,6 +56,6 @@ class COCODataset(torch.utils.data.dataset.Dataset):
         return data
 
     def __len__(self):
-        return len(self.encoded_captions_lens_flie)
+        return len(self.encoded_captions_lens)
 
 

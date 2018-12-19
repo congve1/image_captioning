@@ -75,6 +75,8 @@ _C.MODEL.ENCODER.FEATURE_SIZE = 2048
 # Decoder options
 # ------------------------------------------------------------------------------
 _C.MODEL.DECODER = CN()
+_C.MODEL.DECODER.CORE = 'TopDownCore'
+_C.MODEL.DECODER.ATTENTION = "TopDownAttention"
 # word embedding size
 _C.MODEL.DECODER.EMBEDDING_SIZE = 512
 # num of hidden units of the rnn
@@ -143,6 +145,8 @@ _C.SOLVER.WARMUP_METHOD = "linear"
 _C.SOLVER.CHECKPOINT_PERIOD = 2500
 
 _C.SOLVER.LOG_PERIOD = 100
+
+_C.SOLVER.VAL_PERIOD = 1000
 # Number of images per batch
 # This is global
 _C.SOLVER.IMS_PER_BATCH = 16
