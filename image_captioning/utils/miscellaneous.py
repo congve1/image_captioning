@@ -1,7 +1,9 @@
 import errno
 import os
+import unicodedata
+import string
 
-
+all_letters = string.ascii_letters+"<>"
 def mkdir(path):
     try:
         os.makedirs(path)
@@ -9,6 +11,12 @@ def mkdir(path):
         if e.errno != errno.EEXIST:
             raise
 
+def unicode_to_ascii(s):
+    return "".join(
+        c for c in unicodedata.normalize("NFD", s)
+        if unicodedata.category(c) != "Mn"
+        and c in all_letters
+    )
 
 def encode_caption(vocab, caption):
     """
