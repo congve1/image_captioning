@@ -27,6 +27,7 @@ def val(cfg):
     decoder = build_decoder(cfg,vocab)
     checkpointer = ModelCheckpointer(cfg, decoder)
     checkpointer.load(cfg.MODEL.WEIGHT)
+    decoder = decoder.to(device)
     val_data_loder = make_data_loader(
         cfg,
         split='val'
