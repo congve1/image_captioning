@@ -60,6 +60,7 @@ def train(cfg):
         log_period,
         val_period,
         val,
+        vocab,
         arguments,
     )
     return model

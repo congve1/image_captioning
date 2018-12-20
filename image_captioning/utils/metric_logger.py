@@ -38,8 +38,8 @@ class SmoothedValue(object):
 
 
 class MetricLogger(object):
-    def __init__(self, delimiter='\t', name='image_captioning'):
-        self.meters = defaultdict(SmoothedValue)
+    def __init__(self, delimiter='\t', log_period=20, name='image_captioning'):
+        self.meters = defaultdict(lambda: SmoothedValue(log_period))
         self.delimiter = delimiter
         self.writer = tensorboardX.SummaryWriter(log_dir=('runs/'+name))
 

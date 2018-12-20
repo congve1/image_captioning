@@ -7,6 +7,8 @@ from image_captioning.utils.metric_logger import MetricLogger
 from image_captioning.config import cfg
 from image_captioning.modeling.utils import clip_gradients
 from image_captioning.modeling.utils import LanguageModelCriterion
+from image_captioning.modeling.utils import RewardCriterion
+from image_captioning.utils.rewards import get_self_critical_reward
 
 
 def do_train(
@@ -20,18 +22,22 @@ def do_train(
         log_period,
         val_period,
         val_function,
+        vocab,
         arguments
 ):
     logger = logging.getLogger('image_captioning.trainer')
     logger.info("Start training")
-    meters = MetricLogger(delimiter='  ', name=cfg.SOLVER.METRIC_LOGGER_NAME)
+    meters = MetricLogger(
+        delimiter='  ', log_period=log_period, name=cfg.SOLVER.METRIC_LOGGER_NAME
+    )
     max_iter = len(train_data_loader)
     start_iter = arguments['iteration']
     model.train()
     start_training_time = time.time()
-    ce_criterion = LanguageModelCriterion()
-    criterion = ce_criterion
+    criterion = LanguageModelCriterion()
+    rl_criterion = RewardCriterion()
     best_cider_score = -1000.0
+    scst_iter = cfg.SOLVER.SCST_AFTER
     end = time.time()
     for iteration, data in enumerate(train_data_loader, start_iter):
         data_time = time.time() - end
@@ -45,8 +51,27 @@ def do_train(
         cap_lens = data['cap_lens'].to(device)
         captions = data['captions'].to(device)
 
-        outputs, weights = model(fc_features, att_features, captions)
-        loss = criterion(outputs, captions[:, 1:], cap_lens+1)
+        if scst_iter == -1 or iteration <= scst_iter:
+            outputs, att_weights = model(fc_features, att_features, captions)
+            loss = criterion(outputs, captions[:, 1:], cap_lens+1)
+        else:
+            sample_seqs,\
+            sample_seq_log_probs,\
+            sample_att_weights = model.sample(
+                fc_features, att_features
+            )
+            greed_seqs,\
+            greed_seqs_log_probs,\
+            greed_att_weights = model.greedy_search(
+                fc_features, att_features
+            )
+            rewards = get_self_critical_reward(
+                sample_seqs, greed_seqs, data['all_captions'],
+                cfg.DATASET.SEQ_PER_IMG, vocab
+            ).to(device)
+            loss = rl_criterion(
+                sample_seq_log_probs, rewards, cap_lens+1
+            )
 
         optimizer.zero_grad()
         loss.backward()

@@ -26,16 +26,15 @@ def clip_gradients(optimizer, grad_clip):
             if param.grad is not None:
                 param.grad.data.clamp_(-grad_clip, grad_clip)
 
+def build_masks(batch_size, seq_len, cap_lens, device):
+    masks = torch.zeros((batch_size, seq_len)).to(device)
+    for i in range(batch_size):
+        masks[i, :cap_lens[i]] = torch.ones(cap_lens[i])
+    return masks
 
 class LanguageModelCriterion(nn.Module):
     def __init__(self):
         super(LanguageModelCriterion, self).__init__()
-
-    def build_masks(self, batch_size, seq_len, cap_lens, device):
-        masks = torch.zeros((batch_size, seq_len)).to(device)
-        for i in range(batch_size):
-            masks[i, :cap_lens[i]] = torch.ones(cap_lens[i])
-        return masks
 
     def forward(self, inputs, targets, cap_lens):
         """
@@ -53,8 +52,8 @@ class LanguageModelCriterion(nn.Module):
 
         """
         batch_size = inputs.size(0)
-        seq_size = inputs.size(1)
-        masks = self.build_masks(batch_size, seq_size, cap_lens, inputs.device)
+        seq_len = inputs.size(1)
+        masks = build_masks(batch_size, seq_len, cap_lens, inputs.device)
         inputs = to_contiguous(inputs).view(-1, inputs.shape[-1])
         inputs = F.log_softmax(inputs, dim=1)
         targets = to_contiguous(targets).view(-1, 1)
@@ -62,3 +61,21 @@ class LanguageModelCriterion(nn.Module):
         output = - inputs.gather(1, targets) * masks
         output = torch.sum(output) / torch.sum(masks)
         return output
+
+
+class RewardCriterion(nn.Module):
+    def __init__(self):
+        super(RewardCriterion, self).__init__()
+
+    def forward(self, log_probs, rewards, cap_lens):
+        batch_size = log_probs.size(0)
+        seq_length = log_probs.size(1)
+        masks = build_masks(
+            batch_size, seq_length, cap_lens, log_probs.device
+        ).view(-1)
+        log_probs = log_probs.view(-1)
+        rewards = rewards.view(-1)
+        reward_loss = -log_probs * rewards * masks
+        reward_loss = torch.sum(reward_loss) / torch.sum(masks)
+
+        return reward_loss

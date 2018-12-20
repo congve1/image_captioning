@@ -52,7 +52,7 @@ def decode_sequence(vocab, seq):
                 if token_ix >= 1:
                     txt = txt + ' '
                 txt = txt + vocab[ix]
-        out.append(txt)
+        out.append(txt.strip())
     return out
 
 
