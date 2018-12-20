@@ -34,10 +34,12 @@ class COCODataset(torch.utils.data.dataset.Dataset):
     def __getitem__(self, index):
 
         att_feature = torch.load(
-            self.att_features_paths[index//self.seq_per_img]
+            self.att_features_paths[index//self.seq_per_img],
+            map_location='cpu'
         )
         fc_feature = torch.load(
-            self.fc_features_paths[index//self.seq_per_img]
+            self.fc_features_paths[index//self.seq_per_img],
+            map_location='cpu'
         )
         cap_len = self.encoded_captions_lens[index]
         caption = self.encoded_captions[index]
