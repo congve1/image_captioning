@@ -2,6 +2,7 @@ import datetime
 import logging
 import time
 
+import torch
 import torch.nn as nn
 from image_captioning.utils.metric_logger import MetricLogger
 from image_captioning.config import cfg
@@ -60,15 +61,16 @@ def do_train(
             sample_att_weights = model.sample(
                 fc_features, att_features
             )
-            greed_seqs,\
-            greed_seqs_log_probs,\
-            greed_att_weights = model.greedy_search(
-                fc_features, att_features
-            )
-            rewards = get_self_critical_reward(
-                sample_seqs, greed_seqs, data['all_captions'],
-                cfg.DATASET.SEQ_PER_IMG, vocab
-            ).to(device)
+            with torch.no_grad():
+                greed_seqs,\
+                greed_seqs_log_probs,\
+                greed_att_weights = model.greedy_search(
+                    fc_features, att_features
+                )
+                rewards = get_self_critical_reward(
+                    sample_seqs, greed_seqs, data['all_captions'],
+                    cfg.DATASET.SEQ_PER_IMG, vocab
+                ).to(device)
             loss = rl_criterion(
                 sample_seq_log_probs, rewards, cap_lens+1
             )

@@ -18,10 +18,19 @@ from image_captioning.utils.collect_env import  collect_env_info
 from image_captioning.utils.logger import setup_logger
 from image_captioning.utils.miscellaneous import mkdir
 from image_captioning.modeling.utils import LanguageModelCriterion
+from image_captioning.utils.rewards import init_scoreer
+from image_captioning.utils.imports import import_file
 
 
 def train(cfg):
     vocab = get_vocab(cfg.DATASET.TRAIN)
+    paths_catalog = import_file(
+            'image_captioning.config.paths_catalog', cfg.PATHS_CATALOG, True
+        )
+    DatasetCatalog = paths_catalog.DatasetCatalog
+    dataset = DatasetCatalog.get(cfg.DATASET.TRAIN)
+    cached_tokens = os.path.join(dataset['args']['root'], cfg.DATASET.TRAIN+"_words.pkl")
+    init_scoreer(cached_tokens)
     model = build_decoder(cfg, vocab)
     device = torch.device(cfg.MODEL.DEVICE)
     model.to(device)

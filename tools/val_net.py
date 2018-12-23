@@ -48,6 +48,10 @@ def val(cfg):
                 metric, score
             )
         )
+    for pred in predictions:
+        logger.info("image id:{}\ncaption:{}".format(
+            pred['image_id'], pred['caption']
+        ))
 
 
 
