@@ -18,7 +18,7 @@ from image_captioning.utils.collect_env import  collect_env_info
 from image_captioning.utils.logger import setup_logger
 from image_captioning.utils.miscellaneous import mkdir
 from image_captioning.modeling.utils import LanguageModelCriterion
-from image_captioning.utils.rewards import init_scoreer
+from image_captioning.utils.rewards import init_scorer
 from image_captioning.utils.imports import import_file
 
 
@@ -29,8 +29,9 @@ def train(cfg):
         )
     DatasetCatalog = paths_catalog.DatasetCatalog
     dataset = DatasetCatalog.get(cfg.DATASET.TRAIN)
-    cached_tokens = os.path.join(dataset['args']['root'], cfg.DATASET.TRAIN+"_words.pkl")
-    init_scoreer(cached_tokens)
+    if cfg.SOLVER.SCST_AFTER != 1:
+        cached_tokens = os.path.join(dataset['args']['root'], cfg.DATASET.TRAIN+"_words.pkl")
+        init_scorer(cached_tokens)
     model = build_decoder(cfg, vocab)
     device = torch.device(cfg.MODEL.DEVICE)
     model.to(device)

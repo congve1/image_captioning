@@ -7,10 +7,13 @@ import numpy as np
 
 from image_captioning.utils.miscellaneous import decode_sequence
 import sys
-sys.path.append('coco-caption')
-from pycocoevalcap.cider.cider import Cider
+sys.path.append('cider')
+from pyciderevalcap.ciderD.ciderD import CiderD
 
-ciderd_scorer = Cider()
+ciderd_scorer = None
+def init_scorer(cached_tokens):
+    global ciderd_scorer
+    ciderd_scorer = CiderD(df=cached_tokens)
 
 
 def get_self_critical_reward(
@@ -33,11 +36,10 @@ def get_self_critical_reward(
         res[i] = [sample_results[i]]
     for i in range(batch_size):
         res[batch_size+i] = [greed_results[i]]
-    #res_ciderd = [{'image_id': i, 'caption': res[i]} for i in range(2*batch_size)]
+    res_ciderd = [{'image_id': i, 'caption': res[i]} for i in range(2*batch_size)]
     gts_str = [decode_sequence(vocab, gt) for gt in all_captions]
     gts = {i: gts_str[i%batch_size] for i in range(2*batch_size)}
-    cider_scores_avg, cider_scores = ciderd_scorer.compute_score(gts, res)
-    logger.info('average cider score: {:.4f}'.format(cider_scores_avg))
+    cider_scores_avg, cider_scores = ciderd_scorer.compute_score(gts, res_ciderd)
     scores = cider_scores[:batch_size] - cider_scores[batch_size:]
     rewards = np.repeat(scores[:, np.newaxis], seq_length, 1)
     return torch.from_numpy(rewards).to(torch.float32)
