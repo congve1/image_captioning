@@ -41,6 +41,7 @@ def train(cfg):
 
     arguments = dict()
     arguments['iteration'] = 0
+    arguments['best_cider_score'] = -10000
 
     output_dir = cfg.OUTPUT_DIR
     save_to_disk = True

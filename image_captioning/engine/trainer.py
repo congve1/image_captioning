@@ -37,7 +37,7 @@ def do_train(
     start_training_time = time.time()
     criterion = LanguageModelCriterion()
     rl_criterion = RewardCriterion()
-    best_cider_score = -1000.0
+    best_cider_score = arguments['best_cider_score']
     scst_iter = cfg.SOLVER.SCST_AFTER
     end = time.time()
     for iteration, data in enumerate(train_data_loader, start_iter):
@@ -116,8 +116,11 @@ def do_train(
             model.train()
             if scores['CIDEr'] > best_cider_score:
                 best_cider_score = scores['CIDEr']
+                arguments['best_cider_score'] = best_cider_score
                 logger.info("best cider score: {:.4f}".format(best_cider_score))
-                checkpointer.save('model_best', save_last_checkpoint=False)
+                checkpointer.save(
+                    'model_best', save_last_checkpoint=False, best_cider_score=best_cider_score
+                )
         if iteration == max_iter:
             checkpointer.save('model_final')
         end = time.time()

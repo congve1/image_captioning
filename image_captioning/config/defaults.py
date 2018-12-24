@@ -122,7 +122,7 @@ _C.MODEL.RESNETS.STEM_OUT_CHANNELS = 64
 _C.SOLVER = CN()
 _C.SOLVER.MAX_ITER = 40000
 
-_C.SOLVER.BASE_LR = 0.001
+_C.SOLVER.BASE_LR = 0.01
 _C.SOLVER.BIAS_LR_FACTOR = 2
 # after how many iterations to start self-critical training
 # -1 for disable, 0 from the beginning
