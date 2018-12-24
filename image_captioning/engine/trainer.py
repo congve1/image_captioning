@@ -104,6 +104,7 @@ def do_train(
         meters.add_scalar('loss', loss.item(), iteration)
         # save model and do evaluation
         if iteration % checkpoint_period == 0:
+            arguments['save_last_checkpoint'] = True
             checkpointer.save('model_{:07d}'.format(iteration), **arguments)
         # validate and save model
         if iteration % val_period == 0:
