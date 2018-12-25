@@ -19,8 +19,8 @@ from image_captioning.utils.miscellaneous import mkdir
 from image_captioning.modeling.utils import LanguageModelCriterion
 
 
-def val(cfg):
-    logger = logging.getLogger('image_captioning.val')
+def test(cfg):
+    logger = logging.getLogger('image_captioning.test')
     dataset = cfg.DATASET.TEST
     vocab = get_vocab(dataset)
     device = cfg.MODEL.DEVICE
@@ -90,7 +90,7 @@ def main():
         with open(args.config_file, 'r') as cf:
             config_str = '\n' + cf.read()
             logger.info(config_str)
-    val(cfg)
+    test(cfg)
 
 
 if __name__ == '__main__':
