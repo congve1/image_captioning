@@ -14,6 +14,7 @@ from image_captioning.data.transforms.build import  build_transforms
 from image_captioning.utils.miscellaneous import decode_sequence
 from image_captioning.utils.checkpoint import ModelCheckpointer
 from image_captioning.utils.logger import  setup_logger
+from image_captioning.modeling.utils import cat
 
 
 def main():
@@ -113,22 +114,33 @@ def generate_results_json(
         ann_file = json.load(f)
     descriptions = []
     transform = build_transforms()
+    batch_size = cfg.TEST.IMS_PER_BATCH
+    num_imgs = len(ann_file['images'])
+    images = ann_file['images']
     logger.info("Start generating captions.")
     with torch.no_grad():
-        for idx, img in enumerate(ann_file['images']):
-            img_file = os.path.join(img_dir, img['file_name'])
-            img_t = Image.open(img_file).convert('RGB')
-            img_t = transform(img_t).to(device)
-            fc_feature, att_feature = encoder(img_t.unsqueeze(0))
+        for idx in range(0, num_imgs, batch_size):
+            idx_end = idx + batch_size if (idx+batch_size) < num_imgs else num_imgs
+            image_list = []
+            for i in range(idx, idx_end):
+                img_file = os.path.join(img_dir, images[i]['file_name'])
+                img_t = Image.open(img_file).convert('RGB')
+                img_t = transform(img_t).to(device)
+                image_list.append(img_t)
+            img_t = torch.stack(image_list, 0)
+            fc_feature, att_feature = encoder(img_t)
             seq, probs, weights = decoder.decode_search(
                 fc_feature, att_feature, beam_size
             )
-            sentecne = decode_sequence(vocab, seq)
-            entry = {'image_id': img['id'], 'caption': sentecne[0]}
-            logger.info("processed {}/{}".format(
-                idx+1, len(ann_file['images'])
+            idx_range = range(idx, idx_end)
+            sentecnes = decode_sequence(vocab, seq)
+            for sent_idx, image_idx in enumerate(idx_range):
+                entry = {'image_id': images[image_idx]['id'],
+                         'caption': sentecnes[sent_idx]}
+                descriptions.append(entry)
+            logger.info("processed {}/{} images".format(
+                idx_end, num_imgs
             ))
-            descriptions.append(entry)
     with open(output_json, 'w') as f:
         json.dump(descriptions, f)
 
