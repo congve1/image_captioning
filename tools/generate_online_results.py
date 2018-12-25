@@ -48,7 +48,7 @@ def main():
         cfg.merge_from_file(args.config_file)
     cfg.merge_from_list(args.opts)
     cfg.freeze()
-    logger = setup_logger("image_captiong")
+    logger = setup_logger("image_captioning")
     device = cfg.MODEL.DEVICE
     beam_size = cfg.MODEL.DECODER.BEAM_SIZE
     paths_catalog = import_file(
