@@ -123,7 +123,7 @@ def do_train(
                     'model_best', save_last_checkpoint=False, best_cider_score=best_cider_score
                 )
         if iteration == max_iter:
-            checkpointer.save('model_final')
+            checkpointer.save('model_final', **arguments)
         end = time.time()
 
     total_training_time = time.time() - start_training_time
