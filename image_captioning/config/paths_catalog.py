@@ -66,7 +66,7 @@ class DatasetCatalog(object):
             'fc_features_paths_file': 'coco_2014_fc_features_test_simple_paths.json',
             'encoded_captions_file': 'coco_2014_captions_test_simple.pt',
             'encoded_captions_lens_file': 'coco_2014_captions_lens_test_simple.pt',
-            "cocoids_file": "coco_2014_cocoids_test.json",
+            "cocoids_file": "coco_2014_cocoids_test_simple.json",
         },
         "coco_2014_online_test": {
             "img_dir": "coco/test2014",
