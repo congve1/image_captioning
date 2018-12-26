@@ -1,5 +1,6 @@
 from collections import defaultdict
 from collections import deque
+from datetime import datetime
 
 import torch
 import tensorboardX
@@ -41,7 +42,9 @@ class MetricLogger(object):
     def __init__(self, delimiter='\t', log_period=20, name='image_captioning'):
         self.meters = defaultdict(lambda: SmoothedValue(log_period))
         self.delimiter = delimiter
-        self.writer = tensorboardX.SummaryWriter(log_dir=('runs/'+name))
+        now = datetime.now()
+        log_dir = 'runs/'+name+"/"+now.strftime("%Y%m%d-%H%M%S")
+        self.writer = tensorboardX.SummaryWriter(log_dir=log_dir)
 
     def update(self, **kwargs):
         for k, v in kwargs.items():

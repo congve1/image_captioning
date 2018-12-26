@@ -125,7 +125,7 @@ _C.SOLVER.MAX_ITER = 40000
 _C.SOLVER.OPTIMIZER = "SGD"
 _C.SOLVER.SCHEDULER = "WarmupMultiStepLR"
 
-_C.SOLVER.BASE_LR = 0.01
+_C.SOLVER.BASE_LR = 0.1
 _C.SOLVER.BIAS_LR_FACTOR = 2
 # after how many iterations to start self-critical training
 # -1 for disable, 0 from the beginning
@@ -140,7 +140,10 @@ _C.SOLVER.WEIGHT_DECAY_BIAS = 0
 
 # Adam beta
 _C.SOLVER.BETAS = (0.9, 0.999)
-
+# SGDR settings
+_C.SOLVER.T_MAX = 5000
+_C.SOLVER.T_MULTI = 2
+_C.SOLVER.ETA_MIN = 0.00001
 # WarmupMultiStep Scheduler settings
 _C.SOLVER.GAMMA = 0.1
 _C.SOLVER.STEPS = (30000, )

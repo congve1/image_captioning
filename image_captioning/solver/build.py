@@ -3,6 +3,7 @@ import torch
 from image_captioning.solver import registry
 
 from .lr_scheduler import WarmupMultiStepLR
+from .lr_scheduler import SGDRCosineLR
 
 @registry.OPTIMIZERS.register("Adam")
 def make_Adam(cfg, params):
@@ -39,6 +40,18 @@ def make_StepLR(cfg, optimizer):
         optimizer,
         cfg.SOLVER.STEP_SIZE,
         cfg.SOLVER.GAMMA
+    )
+
+@registry.SCHEDULERS.register("SGDR")
+def make_SGR(cfg, optimizer):
+    return SGDRCosineLR(
+        optimizer,
+        cfg.SOLVER.T_MAX,
+        cfg.SOLVER.T_MULTI,
+        cfg.SOLVER.ETA_MIN,
+        warmup_factor=cfg.SOLVER.WARMUP_FACTOR,
+        warmup_iters=cfg.SOLVER.WARMUP_ITERS,
+        warmup_method=cfg.SOLVER.WARMUP_METHOD
     )
 
 def make_optimizer(cfg, model):
