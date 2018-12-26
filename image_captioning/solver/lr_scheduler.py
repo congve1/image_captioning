@@ -31,8 +31,6 @@ class WarmupMultiStepLR(torch.optim.lr_scheduler._LRScheduler):
         self.warmup_iters = warmup_iters
         self.warmup_method = warmup_method
         super(WarmupMultiStepLR, self).__init__(optimizer, last_epoch)
-        if self.last_epoch == -1:
-            self.last_epoch += 1
 
     def get_lr(self):
         warmup_factor = 1
@@ -73,8 +71,6 @@ class SGDRCosineLR(torch.optim.lr_scheduler._LRScheduler):
         self.warmup_iters = warmup_iters
         self.warmup_method = warmup_method
         super(SGDRCosineLR, self).__init__(optimizer, last_epoch)
-        if self.last_epoch == -1:
-            self.last_epoch += 1
 
     def get_lr(self):
         warmup_factor = 1
