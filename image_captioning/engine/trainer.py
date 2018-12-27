@@ -72,7 +72,7 @@ def do_train(
                     cfg.DATASET.SEQ_PER_IMG, vocab
                 ).to(device)
             loss = rl_criterion(
-                sample_seq_log_probs, rewards, cap_lens+1
+                sample_seq_log_probs, rewards, greed_seqs, vocab
             )
 
         optimizer.zero_grad()

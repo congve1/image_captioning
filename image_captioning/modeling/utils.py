@@ -67,12 +67,17 @@ class RewardCriterion(nn.Module):
     def __init__(self):
         super(RewardCriterion, self).__init__()
 
-    def forward(self, log_probs, rewards, cap_lens):
+    def forward(self, log_probs, rewards, sample_seqs, vocab):
         batch_size = log_probs.size(0)
         seq_length = log_probs.size(1)
-        masks = build_masks(
-            batch_size, seq_length, cap_lens, log_probs.device
-        ).view(-1)
+        end_idx = vocab['<end>']
+        pad_idx = vocab['<pad>']
+        masks = sample_seqs.new_ones(
+            sample_seqs.size(), dtype=torch.float
+        ).to(sample_seqs.device)
+        masks[sample_seqs==end_idx] = 0.
+        masks[sample_seqs==pad_idx] = 0.
+        masks = cat([masks.new(masks.size(0), 1).fill_(1), masks[:, :-1]], 1).reshape(-1)
         log_probs = log_probs.view(-1)
         rewards = rewards.view(-1)
         reward_loss = -log_probs * rewards * masks
