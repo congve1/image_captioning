@@ -31,14 +31,14 @@ def build_vocab():
             word_freq.update(sentence['tokens'])
     logger.info("start building vocab")
     word_to_idx = {
-        unicode_to_ascii('<pad>'): 0,
-        unicode_to_ascii('<start>'): 1,
-        unicode_to_ascii('<end>'): 2,
-        unicode_to_ascii('<unk>'): 3
+        '<pad>': 0,
+        '<start>': 1,
+        '<end>': 2,
+        '<unk>': 3
     }
     idx = len(word_to_idx) 
     for word, word_count in word_freq.items():
-        word = unicode_to_ascii(word)
+        #word = unicode_to_ascii(word)
         if not word:
             continue
         if word in word_to_idx.keys():
