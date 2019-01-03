@@ -53,7 +53,7 @@ class TopDownCore(nn.Module):
 
         """
         for name, param in self.named_parameters():
-            if 'weight' in name:
+            if 'weight_' in name:
                 nn.init.orthogonal_(param)
 
 @registry.DECODER_CORES.register("ConvHiddenCore")
@@ -113,6 +113,6 @@ class ConvHiddenCore(nn.Module):
 
         """
         for name, param in self.named_parameters():
-            if 'weight' in name:
+            if 'weight_' in name:
                 nn.init.orthogonal_(param)
 
