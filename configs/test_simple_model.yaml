@@ -3,11 +3,18 @@ DATASET:
   VAL: "coco_2014_val_simple"
   TEST: "coco_2014_test_simple"
 SOLVER:
-  MAX_ITER: 100
+  BASE_LR: 0.01
   STEPS: (30, 50)
+  MAX_ITER: 100
+  WARMUP_ITERS: 10
   CHECKPOINT_PERIOD: 20
-  LOG_PERIOD: 10
+  LOG_PERIOD: 1
+  VAL_PERIOD: 10
+  SCST_AFTER: 0
+  IMS_PER_BATCH: 8
 MODEL:
-  DEVICE: 'cpu'
   DECODER:
     BEAM_SIZE: 3
+    CORE: "ConvHiddenCore"
+    ATTENTION: "DualAttention"
+  WEIGHT: "save/model.pth"
