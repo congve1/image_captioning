@@ -130,8 +130,8 @@ _C.SOLVER.BIAS_LR_FACTOR = 2
 # after how many iterations to start self-critical training
 # -1 for disable, 0 from the beginning
 _C.SOLVER.SCST_AFTER = -1
-# clip gradients at this value
-_C.SOLVER.GRAD_CLIP = 1.0
+# clip gradients at this norm
+_C.SOLVER.GRAD_CLIP = 10.0
 
 _C.SOLVER.MOMENTUM = 0.9
 

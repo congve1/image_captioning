@@ -1,6 +1,7 @@
 import torch
 from torch import nn
 from torch.nn import functional as F
+from torch._six import inf
 
 
 def cat(tensors, dim=0):
@@ -20,17 +21,35 @@ def to_contiguous(tensor):
         return tensor.contiguous()
 
 
-def clip_gradients(optimizer, grad_clip):
+def clip_gradients(optimizer, max_norm, norm_type=2):
+    parameters = []
     for group in optimizer.param_groups:
         for param in group['params']:
-            if param.grad is not None:
-                param.grad.data.clamp_(-grad_clip, grad_clip)
+            parameters.append(param)
+    parameters = list(filter(lambda p: p.grad is not None, parameters))
+    max_norm = float(max_norm)
+    norm_type = float(norm_type)
+    if norm_type == inf:
+        total_norm = max(p.grad.data.abs().max() for p in parameters)
+    else:
+        total_norm = 0.
+        for p in parameters:
+            param_norm = p.grad.norm(norm_type)
+            total_norm += param_norm.item() ** norm_type
+        total_norm = total_norm ** (1. / norm_type)
+    clip_coef = max_norm / (total_norm + 1e-6)
+    if clip_coef < 1:
+        for p in parameters:
+            p.grad.data.mul_(clip_coef)
+    return total_norm
+
 
 def build_masks(batch_size, seq_len, cap_lens, device):
     masks = torch.zeros((batch_size, seq_len)).to(device)
     for i in range(batch_size):
         masks[i, :cap_lens[i]] = torch.ones(cap_lens[i])
     return masks
+
 
 class LanguageModelCriterion(nn.Module):
     def __init__(self):

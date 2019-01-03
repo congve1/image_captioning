@@ -77,7 +77,7 @@ def do_train(
 
         optimizer.zero_grad()
         loss.backward()
-        #clip_gradients(optimizer, cfg.SOLVER.GRAD_CLIP)
+        clip_gradients(optimizer, cfg.SOLVER.GRAD_CLIP)
         optimizer.step()
 
         batch_time = time.time() - end
