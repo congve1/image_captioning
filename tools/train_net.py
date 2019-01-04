@@ -106,13 +106,14 @@ def test(cfg, model):
         cfg,
         split='test'
     )
+    beam_size = cfg.TEST.BEAM_SIZE
     test_loss, predictions, scores = inference(
         model,
         criterion,
         test_data_loader,
         dataset_name,
         vocab,
-        cfg.MODEL.DECODER.BEAM_SIZE,
+        beam_size,
         device
     )
     for prediction in predictions:

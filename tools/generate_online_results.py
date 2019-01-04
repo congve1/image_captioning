@@ -50,7 +50,7 @@ def main():
     cfg.freeze()
     logger = setup_logger("image_captioning")
     device = cfg.MODEL.DEVICE
-    beam_size = cfg.MODEL.DECODER.BEAM_SIZE
+    beam_size = cfg.TEST.BEAM_SIZE
     paths_catalog = import_file(
         "image_captioning.config.paths_catalog", cfg.PATHS_CATALOG, True
     )

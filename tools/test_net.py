@@ -33,13 +33,14 @@ def test(cfg):
         split='test'
     )
     criterion = LanguageModelCriterion()
+    beam_size = cfg.TEST.BEAM_SIZE
     loss, predictions, scores = inference(
         decoder,
         criterion,
         test_data_loder,
         dataset,
         vocab,
-        cfg.MODEL.DECODER.BEAM_SIZE,
+        beam_size,
         device
     )
     for metric, score in scores.items():

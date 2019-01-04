@@ -170,6 +170,7 @@ _C.TEST = CN()
 # Number of images per batch
 # This is global
 _C.TEST.IMS_PER_BATCH = 8
+_C.TEST.BEAM_SIZE = 3
 
 
 # ------------------------------------------------------------------------------
