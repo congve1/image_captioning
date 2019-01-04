@@ -55,9 +55,6 @@ def test(cfg):
         ))
 
 
-
-
-
 def main():
     parser = argparse.ArgumentParser(description='Pytorch image captioning validating')
     parser.add_argument(
