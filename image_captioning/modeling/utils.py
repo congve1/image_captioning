@@ -73,8 +73,8 @@ class LanguageModelCriterion(nn.Module):
         batch_size = inputs.size(0)
         seq_len = inputs.size(1)
         masks = build_masks(batch_size, seq_len, cap_lens, inputs.device)
+        inputs = F.log_softmax(inputs, dim=2)
         inputs = to_contiguous(inputs).view(-1, inputs.shape[-1])
-        inputs = F.log_softmax(inputs, dim=1)
         targets = to_contiguous(targets).view(-1, 1)
         masks = to_contiguous(masks).view(-1, 1)
         output = - inputs.gather(1, targets) * masks
@@ -94,7 +94,7 @@ class RewardCriterion(nn.Module):
         masks = sample_seqs.new_ones(
             sample_seqs.size(), dtype=torch.float
         ).to(sample_seqs.device)
-        masks[sample_seqs==end_idx] = 0.
+        #masks[sample_seqs==end_idx] = 0.
         masks[sample_seqs==pad_idx] = 0.
         masks = cat([masks.new(masks.size(0), 1).fill_(1), masks[:, :-1]], 1).reshape(-1)
         log_probs = log_probs.view(-1)

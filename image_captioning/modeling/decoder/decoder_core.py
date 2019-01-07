@@ -94,7 +94,7 @@ class ConvHiddenCore(nn.Module):
             weighted_channel_features,\
             att_weights = self.attention(att_feats, filter_h_att)
         input_lang_lstm = cat([weighted_spatial_features,
-                               weighted_channel_features, filter_h_att], 1)
+                               weighted_channel_features, next_h_att], 1)
         next_h_lang, next_c_lang = self.lang_lstm(
             input_lang_lstm, (prev_h_lang, prec_c_lang)
         )

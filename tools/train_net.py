@@ -29,7 +29,7 @@ def train(cfg):
         )
     DatasetCatalog = paths_catalog.DatasetCatalog
     dataset = DatasetCatalog.get(cfg.DATASET.TRAIN)
-    if cfg.SOLVER.SCST_AFTER != 1:
+    if cfg.SOLVER.SCST_AFTER != -1:
         cached_tokens = os.path.join(dataset['args']['root'], cfg.DATASET.TRAIN+"_words.pkl")
         init_scorer(cached_tokens)
     model = build_decoder(cfg, vocab)
@@ -82,7 +82,8 @@ def val(model, device):
     vocab = get_vocab(dataset_name)
     val_data_loder = make_data_loader(
         cfg,
-        split='val'
+        split='val',
+
     )
     criterion = LanguageModelCriterion()
     return inference(

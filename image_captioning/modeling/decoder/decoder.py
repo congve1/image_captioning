@@ -142,27 +142,18 @@ class Decoder(nn.Module):
             tmp_att_feats = att_feats[k:k+1].expand(
                 *(beam_size,)+att_feats.size()[1:]
             ).contiguous()
-            #input <start>
-            it = fc_feats.new_zeros([beam_size],dtype=torch.long).fill_(self.vocab['<start>'])
-            xt = self.word_embed(it)
-            output, hidden_states, att_weights = self.core(
-               xt, tmp_fc_feats, tmp_att_feats, hidden_states
-            )
-            log_probs = self.get_log_probs(output)
             done_beams[k] = self._beam_search(
-                hidden_states, att_weights, log_probs, tmp_fc_feats, tmp_att_feats, beam_size
+                tmp_fc_feats, tmp_att_feats, beam_size
             )
             seq[k, :] = done_beams[k][0]['seq'].to(self.device)# the first beam has highes cumulative score
             seq_log_probs[k, :] = done_beams[k][0]['logps'].to(self.device)
             weights[k, :] = done_beams[k][0]['att_weights'].to(self.device)
         return seq, seq_log_probs, weights
 
-    def _beam_search(self, hidden_states, att_weights, log_probs, fc_feats, att_feats, beam_size):
+    def _beam_search(self, fc_feats, att_feats, beam_size):
         """
         perform beam_search on  one image
         Args:
-            init_states:
-            init_log_probs:
             fc_feats:
             att_feats:
 
@@ -233,14 +224,15 @@ class Decoder(nn.Module):
                 beam_log_probs_sum[vix] = v['p']
             return beam_seq, beam_seq_log_probs, beam_seq_log_porbs_sum,\
                 new_hidden_states, new_att_weights, candidates
-
+        hidden_states = self.init_hiddens(beam_size)
+        locations = att_feats.numel() // att_feats.size(0) // att_feats.size(-1)
         beam_seq = torch.zeros((beam_size, self.seq_length+1), dtype=torch.long)
         beam_seq_log_probs = torch.zeros((beam_size, self.seq_length+1))
         beam_log_probs_sum = torch.zeros(beam_size)
-        beam_att_weights = att_weights.new_zeros(
+        beam_att_weights = att_feats.new_zeros(
             beam_size,
             self.seq_length+1,
-            att_weights.size(-1)
+            locations,
         )
         done_beams = []
         for t in range(self.seq_length+1):
@@ -250,6 +242,14 @@ class Decoder(nn.Module):
             we need to resort our beams to maintain the loop invariant for keeping
             the top beam_size most likely sequences.
             """
+            if t == 0:
+                it = fc_feats.new_zeros([beam_size], dtype=torch.long).fill_(self.vocab['<start>'])
+            xt = self.word_embed(it.to(self.device))
+            outputs, hidden_states, att_weights = self.core(
+                xt, fc_feats,
+                att_feats, hidden_states
+            )
+            log_probs = self.get_log_probs(outputs)
             # lets go to cpu for more efficiency in indexing operations
             log_probs = log_probs.cpu().float()
             # supress UNK tokens in the decoding
@@ -277,19 +277,14 @@ class Decoder(nn.Module):
                     final_beam = {
                         'seq': beam_seq[vix, :].clone(),
                         'logps': beam_seq_log_probs[vix, :].clone(),
-                        'p': beam_log_probs_sum[vix],
-                        'att_weights': beam_att_weights[vix]
+                        'p': beam_log_probs_sum[vix].clone(),
+                        'att_weights': beam_att_weights[vix].clone(),
                     }
                     done_beams.append(final_beam)
                     # don't continue beams from finished sequences
                     beam_log_probs_sum[vix] = -1000
             # encode as vectors
             it = beam_seq[:, t]
-            xt = self.word_embed(it.to(fc_feats.device))
-            log_probs, hidden_states, att_weights = self.core(
-                xt, fc_feats,
-                att_feats, hidden_states
-            )
         done_beams = sorted(
             done_beams, key=lambda x: -x['p']
         )[:beam_size]
