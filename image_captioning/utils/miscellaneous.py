@@ -46,6 +46,8 @@ def decode_sequence(vocab, seq):
         txt = ""
         for token_ix in range(length):
             ix = seq[cap_ix, token_ix].item()
+            if vocab[ix] == '<start>':
+                continue
             if vocab[ix] == '<end>':
                 break
             if vocab[ix] != '<pad>':
