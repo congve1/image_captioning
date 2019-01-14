@@ -9,7 +9,7 @@ from . import samplers
 from .collate_batch import BatchCollator
 
 
-def build_dataset(dataset_name, dataset_catalog, seq_per_img):
+def build_dataset(cfg, dataset_name, dataset_catalog, seq_per_img):
     """
     return a dataset with specified dataset name
     Args:
@@ -28,6 +28,9 @@ def build_dataset(dataset_name, dataset_catalog, seq_per_img):
     args = data['args']
     args.pop('ann_file')  # use features, do not need ann_file
     args['seq_per_img'] = seq_per_img
+    args['att_feature_shape'] = (1, cfg.MODEL.ENCODER.FEATURE_SIZE,
+                                 cfg.MODEL.ENCODER.ATT_SIZE, cfg.MODEL.ENCODER.ATT_SIZE)
+    args['fc_feature_shape'] = (1, cfg.MODEL.ENCODER.FEATURE_SIZE,)
     dataset = factory(**args)
     return dataset
 
@@ -74,7 +77,7 @@ def make_data_loader(cfg, split='train', start_iter=0):
         'test': cfg.DATASET.TEST
     }
     dataset_name = dataset_names[split]
-    dataset = build_dataset(dataset_name, DatasetCatalog,
+    dataset = build_dataset(cfg, dataset_name, DatasetCatalog,
                             cfg.DATASET.SEQ_PER_IMG)
     sampler = make_data_sampler(dataset, shuffle)
     batch_sampler = make_batch_data_sampler(
@@ -82,11 +85,13 @@ def make_data_loader(cfg, split='train', start_iter=0):
     )
     num_workers = cfg.DATALOADER.NUM_WORKERS
     collator = BatchCollator()
+    pin_memory = not(cfg.MODEL.DEVICE == 'cpu')
     dataloader = torch.utils.data.dataloader.DataLoader(
         dataset,
         num_workers=num_workers,
         batch_sampler=batch_sampler,
         collate_fn=collator,
+        pin_memory=pin_memory,
     )
 
     return dataloader

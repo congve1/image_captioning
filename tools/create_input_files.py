@@ -8,7 +8,6 @@ import argparse
 from random import seed, choice, sample
 import os
 
-import h5py
 import PIL.Image as Image
 import numpy as np
 import torch

@@ -177,4 +177,4 @@ _C.TEST.BEAM_SIZE = 3
 # Misc options
 # ------------------------------------------------------------------------------
 _C.OUTPUT_DIR = "save"
-_C.PATHS_CATALOG = os.path.join(os.path.dirname(__file__), "paths_catalog.py")
+_C.PATHS_CATALOG = os.path.join(os.path.dirname(__file__), "paths_catalog_lmdb.py")

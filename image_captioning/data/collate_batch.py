@@ -1,5 +1,7 @@
 import torch
 
+from image_captioning.modeling.utils import cat
+
 class BatchCollator(object):
     """
     From a list of samples from the dataset,
@@ -16,21 +18,14 @@ class BatchCollator(object):
             A dict with the batched data
 
         """
-        att_features = []
-        fc_features = []
-        captions = []
-        cap_lens = []
-        all_captions = []
-        cocoids = []
-        for data in batch:
-            att_features.append(data['att_feature'])
-            fc_features.append(data['fc_feature'])
-            captions.append(data['caption'])
-            cap_lens.append(data['cap_len'])
-            all_captions.append(data['all_captions'])
-            cocoids.append(data['cocoid'])
-        att_features = torch.stack(att_features)
-        fc_features = torch.stack(fc_features)
+        att_features,\
+        fc_features,\
+        captions,\
+        cap_lens,\
+        all_captions,\
+        cocoids = zip(*batch)
+        att_features = cat(att_features, dim=0)
+        fc_features = cat(fc_features, dim=0)
         captions = torch.stack(captions)
         cap_lens = torch.stack(cap_lens)
         # all ground truth captions for each image
