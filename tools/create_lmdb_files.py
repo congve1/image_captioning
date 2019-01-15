@@ -1,6 +1,4 @@
-"""
-using h5py to create att_features file, fc_features_file and encoded_captions_file
-"""
+""" using h5py to create att_features file, fc_features_file and encoded_captions_file """
 import json
 import pickle
 import logging
@@ -8,6 +6,7 @@ import argparse
 from random import seed, choice, sample
 import os
 import shutil
+import math
 
 import PIL.Image as Image
 import numpy as np
@@ -23,6 +22,21 @@ from image_captioning.utils.logger import setup_logger
 from image_captioning.data.transforms.build import build_transforms
 from image_captioning.utils.miscellaneous import encode_caption
 from image_captioning.utils.miscellaneous import mkdir
+
+
+def write_cache(env, cocoids, features):
+    out_of_memory = False
+    for idx, cocoid in enumerate(cocoids):
+        try:
+           with env.begin(write=True) as txn:
+                  txn.put("{:8d}".format(cocoid).encode(), features[idx].tobytes())
+        except lmdb.MapFullError:
+            out_of_memory = True
+            break
+    if out_of_memory:
+        new_map_size = env.info()['map_size'] * 2
+        env.set_mapsize(new_map_size)
+        write_cache(env, cocoids, features)
 
 
 def create_input_files(args):
@@ -108,6 +122,7 @@ def create_input_files(args):
                     (sum([len(img_captions) for img_captions in captions]),
                         split, dataset))
         # write features into h5py file
+        page_size = 4096
         enc_cptions = []
         caplens = []
         seed(123)
@@ -142,26 +157,25 @@ def create_input_files(args):
             if not att_features_lmdb:
                 att_tmp_np = att[0].detach().cpu().numpy()
                 nbytes = att_tmp_np.nbytes
-                map_size = nbytes * (img_nums + 3) if nbytes * (img_nums + 3) > 10485760 else 10485760
+                num_pages = math.ceil(nbytes/page_size)
+                map_size= (num_pages*page_size+8+8) * (img_nums+3) + 16
                 att_features_lmdb = lmdb.open(att_features_lmdb_path,
                                               map_size=map_size)
             if not fc_features_lmdb:
                 fc_tmp_np = fc[0].detach().cpu().numpy()
                 nbytes = fc_tmp_np.nbytes
-                map_size = nbytes*(img_nums+3) if nbytes*(img_nums+3) > 10485760 else 10485760
+                num_pages = math.ceil(nbytes/page_size)
+                map_size = (num_pages*page_size + 8 + 8) * (img_nums + 3) + 16
+               # if map_size < 10485760:
+               #     map_size = 10485760
                 fc_features_lmdb = lmdb.open(fc_features_lmdb_path,
                                              map_size=map_size)
 
             idx_list = list(range(idx, idx_end))
             att_numpy = att.detach().cpu().numpy()
             fc_numpy = fc.detach().cpu().numpy()
-            for feature_idx, path_idx in enumerate(idx_list):
-                with att_features_lmdb.begin(write=True) as txn:
-                    txn.put(str(coco_ids[path_idx]).encode(),
-                            att_numpy[feature_idx:feature_idx+1].tobytes())
-                with fc_features_lmdb.begin(write=True) as txn:
-                    txn.put(str(coco_ids[path_idx]).encode(),
-                            fc_numpy[feature_idx:feature_idx+1].tobytes())
+            write_cache(att_features_lmdb, coco_ids[idx:idx_end], att_numpy)
+            write_cache(fc_features_lmdb, coco_ids[idx:idx_end], fc_numpy)
             # get encode captions and cap lens
             for i, cap in enumerate(image_captions):
                 c_len = min(len(cap), seq_max_len)  # length without <start> <end> token
