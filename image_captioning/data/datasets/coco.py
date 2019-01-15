@@ -97,24 +97,21 @@ class COCODatasetLMDB(torch.utils.data.dataset.Dataset):
             fc_features_lmdb, readonly=True, max_readers=1,
             lock=False, readahead=False, meminit=False
         )
-        with self.att_features_lmdb.begin(write=False) as txn:
-            self.att_features_lmdb_keys = [key for key, _ in txn.cursor()]
-        with self.fc_features_lmdb.begin(write=False) as txn:
-            self.fc_features_lmdb_keys = [key for key, _ in txn.cursor()]
 
     def __getitem__(self, index):
         att_features_lmdb = self.att_features_lmdb
         fc_features_lmdb = self.fc_features_lmdb
+        cocoid = self.cocoids[index//self.seq_per_img]
         with att_features_lmdb.begin(write=False) as txn:
             att_feature = txn.get(
-                self.att_features_lmdb_keys[index//self.seq_per_img]
+                "{:8d}".format(cocoid).encode()
             )
             att_feature = np.frombuffer(att_feature, dtype=np.float32)
             att_feature = att_feature.reshape(self.att_feature_shape)
             att_feature = torch.from_numpy(att_feature)
         with fc_features_lmdb.begin(write=False) as txn:
             fc_feature = txn.get(
-                self.fc_features_lmdb_keys[index//self.seq_per_img]
+                "{:8d}".format(cocoid).encode()
             )
             fc_feature = np.frombuffer(fc_feature, dtype=np.float32)
             fc_feature = fc_feature.reshape(self.fc_feature_shape)
@@ -126,7 +123,6 @@ class COCODatasetLMDB(torch.utils.data.dataset.Dataset):
             (index//self.seq_per_img)*self.seq_per_img:
             ((index//self.seq_per_img)+1)*self.seq_per_img
         ]
-        cocoid = self.cocoids[index//self.seq_per_img]
         return att_feature, fc_feature, caption, caption_len, all_captions, cocoid
 
     def __len__(self):
