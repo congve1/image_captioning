@@ -56,10 +56,12 @@ def main():
     )
     DatasetCatalog = paths_catalog.DatasetCatalog
     ResNetCatalog = paths_catalog.ResNetCatalog
-    # get data set
-    dataset_val = DatasetCatalog.get(cfg.DATASET.VAL)
-    dataset_test = DatasetCatalog.get(cfg.DATASET.TEST)
-    vocab = get_vocab(cfg.DATASET.VAL)
+    if cfg.DATASET.VAL:
+        vocab = get_vocab(cfg.DATASET.VAL)
+    elif cfg.DATASET.TEST:
+        vocab = get_vocab(cfg.DATASET.TEST)
+    else:
+        raise ValueError("no dataset specified")
     # build encoder
     encoder = build_encoder(cfg)
     encoder_loader = ModelCheckpointer(cfg, encoder)
@@ -74,35 +76,25 @@ def main():
     # set to eval mode
     encoder.eval()
     decoder.eval()
-    # generate val results
-    generate_results_json(
-        dataset_val['args']['root'],
-        dataset_val['args']['ann_file'],
-        vocab,
-        encoder,
-        decoder,
-        device,
-        beam_size,
-        os.path.join(
-            cfg.OUTPUT_DIR, 'captions_val2014_'+args.alg_name+'_results.json'
-        ),
-        logger,
-    )
-    # generate test results
-    generate_results_json(
-        dataset_test['args']['root'],
-        dataset_test['args']['ann_file'],
-        vocab,
-        encoder,
-        decoder,
-        device,
-        beam_size,
-        os.path.join(
-            cfg.OUTPUT_DIR,
-            'captions_test2014_'+args.alg_name+'_results.json'
-        ),
-        logger,
-    )
+    split = ['val', 'test']
+    for idx, dataset_name in enumerate([cfg.DATASET.VAL, cfg.DATASET.TEST]):
+        if not dataset_name:
+            continue
+        logger.info('load dataset {}'.format(dataset_name))
+        dataset = DatasetCatalog.get(dataset_name)
+        generate_results_json(
+            dataset['args']['root'],
+            dataset['args']['ann_file'],
+            vocab,
+            encoder,
+            decoder,
+            device,
+            beam_size,
+            os.path.join(
+                cfg.OUTPUT_DIR, 'captions_'+split[idx]+"_2014"+args.alg_name+'_results.json'
+            ),
+            logger,
+        )
 
 
 def generate_results_json(
@@ -141,8 +133,10 @@ def generate_results_json(
             logger.info("processed {}/{} images".format(
                 idx_end, num_imgs
             ))
+    logger.info("saving results file: {}".format(output_json))
     with open(output_json, 'w') as f:
         json.dump(descriptions, f)
+    logger.info("Done")
 
 
 if __name__ == '__main__':
