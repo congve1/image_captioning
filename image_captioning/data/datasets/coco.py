@@ -17,7 +17,8 @@ class COCODataset(torch.utils.data.dataset.Dataset):
         encoded_captions_file,
         encoded_captions_lens_file,
         cocoids_file,
-        seq_per_img
+        seq_per_img,
+        **kwargs
     ):
         self.root = root
         self.seq_per_img = seq_per_img
