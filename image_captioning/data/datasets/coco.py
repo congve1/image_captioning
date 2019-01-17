@@ -57,7 +57,7 @@ class COCODataset(torch.utils.data.dataset.Dataset):
         data['caption'] = caption
         data['all_captions'] = all_captions
         data['cocoid'] = cocoid
-        return att_feature.unsqueeze(0), fc_feature.unsqueeze(0), cap_len, caption, all_captions, cocoid
+        return att_feature.unsqueeze(0), fc_feature.unsqueeze(0), caption, cap_len, all_captions, cocoid
 
     def __len__(self):
         return len(self.encoded_captions_lens)
