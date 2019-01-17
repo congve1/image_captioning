@@ -91,7 +91,7 @@ def main():
             device,
             beam_size,
             os.path.join(
-                cfg.OUTPUT_DIR, 'captions_'+split[idx]+"_2014_"+args.alg_name+'_results.json'
+                cfg.OUTPUT_DIR, 'captions_'+split[idx]+"2014_"+args.alg_name+'_results.json'
             ),
             logger,
         )
