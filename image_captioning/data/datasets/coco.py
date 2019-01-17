@@ -51,8 +51,8 @@ class COCODataset(torch.utils.data.dataset.Dataset):
         ]
         cocoid = self.cocoids[index//self.seq_per_img]
         data = dict()
-        data['att_feature'] = att_feature
-        data['fc_feature'] = fc_feature
+        data['att_feature'] = att_feature.unsqueeze(0)
+        data['fc_feature'] = fc_feature.unsqueeze(0)
         data['cap_len'] = cap_len
         data['caption'] = caption
         data['all_captions'] = all_captions
