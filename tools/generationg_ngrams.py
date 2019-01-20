@@ -96,6 +96,9 @@ def generate_ngrams(vocab):
                 refs_idxs.append(ref_idxs)
                 refs_words.append(ref_words)
                 count_imgs += 1
+                if count_imgs % 100 == 0:
+                   logger.info("Processed {}/{} images."
+                               .format(count_imgs, len(ann_file['images'])))
         ngram_words = compute_doc_freq(create_crefs(refs_words))
         ngram_idxs = compute_doc_freq(create_crefs(refs_idxs))
         ngram_words_path = os.path.join(data['args']['root'], dataset+'_words.pkl')

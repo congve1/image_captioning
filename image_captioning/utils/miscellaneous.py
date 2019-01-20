@@ -29,13 +29,14 @@ def encode_caption(vocab, caption):
     return encoded_caption
 
 
-def decode_sequence(vocab, seq):
+def decode_sequence(vocab, seq, include_eos=False):
     """
     change tensor of word indexes to string
     Args:
         vocab (Voab):  the vocabulary contains the  mapping between word and index
         seq (torch.(cuda).LongTensor): size (num_seqs, seq_length). The sequence
         may contain <end> word
+        include_eos (bool): whether including end token
 
     Returns:
         out (list): a list of string that doesn't contain any <end> or <pad> words
@@ -49,6 +50,8 @@ def decode_sequence(vocab, seq):
             if vocab[ix] == '<start>':
                 continue
             if vocab[ix] == '<end>':
+                if include_eos:
+                    txt = txt + ' ' + vocab[ix]
                 break
             if vocab[ix] != '<pad>':
                 if token_ix >= 1:

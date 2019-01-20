@@ -95,8 +95,18 @@ class RewardCriterion(nn.Module):
             sample_seqs.size(), dtype=torch.float
         ).to(sample_seqs.device)
         #masks[sample_seqs==end_idx] = 0.
-        masks[sample_seqs==pad_idx] = 0.
-        masks = cat([masks.new(masks.size(0), 1).fill_(1), masks[:, :-1]], 1).reshape(-1)
+        bool_indexes = (sample_seqs == end_idx)
+        end_indexes = torch.nonzero(bool_indexes)
+        previous_index = -1
+        for index in end_indexes:
+            if previous_index == index[0]:
+                continue
+            previous_index = index[0]
+            bool_indexes[index] = 0
+            bool_indexes[index[0], index[1]+1:] = 1
+        masks[bool_indexes] = 0.
+        #masks = cat([masks.new(masks.size(0), 1).fill_(1), masks[:, :-1]], 1).reshape(-1)
+        masks = masks.reshape(-1)
         log_probs = log_probs.view(-1)
         rewards = rewards.view(-1)
         reward_loss = -log_probs * rewards * masks

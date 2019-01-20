@@ -72,7 +72,7 @@ def do_train(
                     cfg.DATASET.SEQ_PER_IMG, vocab
                 ).to(device)
             loss = rl_criterion(
-                sample_seq_log_probs, rewards, greed_seqs, vocab
+                sample_seq_log_probs, rewards, sample_seqs, vocab
             )
 
         optimizer.zero_grad()
@@ -114,8 +114,8 @@ def do_train(
             logger.info("validation loss:{:.4f}".format(val_loss))
             meters.add_scalar('val_loss', val_loss, iteration)
             for metric, score in scores.items():
-                logger.info("metric {}: {:.4f}".format(metric, score))
-                meters.add_scalar(metric, score, iteration)
+                logger.info("{}: {:.5f}".format(metric, score))
+                meters.add_scalar("metric/"+metric, score, iteration)
             model.train()
             if scores['CIDEr'] > best_cider_score:
                 best_cider_score = scores['CIDEr']
