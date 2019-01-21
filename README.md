@@ -30,8 +30,8 @@ or `python tools/create_input_files.py --config-file path/to/config_file.yaml`(t
 
 
 ### TODO:
-- [] raw image captioning
-- [] bottom-up features support
+- [ ] raw image captioning
+- [ ] bottom-up features support
 
 ### Acknowledgements
 Thanks to [ruotianluo](https://github.com/ruotianluo/self-critical.pytorch) and [maskrcnn-benchmark](https://github.com/facebookresearch/maskrcnn-benchmark)
