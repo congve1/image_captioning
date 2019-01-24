@@ -33,7 +33,7 @@ def main():
     )
     parser.add_argument(
         '--alg-name',
-        default='clwupc',
+        default='clw',
         help='your algorithm name',
         type=str
     )
