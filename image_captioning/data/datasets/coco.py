@@ -92,11 +92,11 @@ class COCODatasetLMDB(torch.utils.data.dataset.Dataset):
             map_location='cpu'
         )
         self.att_features_lmdb = lmdb.open(
-            att_features_lmdb, readonly=True, max_readers=os.cpu_count(),
+            att_features_lmdb, readonly=True, max_readers=1,
             lock=False, readahead=False, meminit=False
         )
         self.fc_features_lmdb = lmdb.open(
-            fc_features_lmdb, readonly=True, max_readers=os.cpu_count(),
+            fc_features_lmdb, readonly=True, max_readers=1,
             lock=False, readahead=False, meminit=False
         )
 
