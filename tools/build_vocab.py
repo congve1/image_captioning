@@ -2,6 +2,7 @@ import pickle
 from collections import Counter
 import pickle
 import json
+import argparse
 import logging
 
 from image_captioning.config import cfg
@@ -55,4 +56,27 @@ def build_vocab():
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '--config-file',
+        help='conifguration file that contains dataset names',
+        default='',
+        type=str
+    )
+    parser.add_argument(
+        'opts',
+        help='Modify config options using the command-line',
+        default=None,
+        nargs=argparse.REMAINDER
+    )
+    args = parser.parse_args()
+    logger = setup_logger('image_captioning')
+    logger.info("merge options from list {}".format(args.opts))
+    if args.config_file:
+        cfg.merge_from_file(args.config_file)
+        logger.info("Loaded configuration file {}".format(args.config_file))
+        with open(args.config_file, 'r') as cf:
+            config_str = '\n' + cf.read()
+            logger.info(config_str)
+    cfg.merge_from_list(args.opts)
     build_vocab()
