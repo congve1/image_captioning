@@ -21,7 +21,7 @@ def compute_on_dataset(
     predictions = []
     done_ids = dict()
     with torch.no_grad():
-        for i, data in enumerate(tqdm(data_loader)):
+        for i, data in enumerate(tqdm(data_loader, ncols=100, ascii=True, desc="decoding")):
             fc_features = data['fc_features'].to(device)
             att_fatures = data['att_features'].to(device)
             captions = data['captions'].to(device)
