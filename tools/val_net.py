@@ -1,6 +1,8 @@
 import argparse
 import os
 import logging
+import json
+import datetime
 
 import torch
 
@@ -19,7 +21,7 @@ from image_captioning.utils.miscellaneous import mkdir
 from image_captioning.modeling.utils import LanguageModelCriterion
 
 
-def val(cfg):
+def val(cfg, verbose=False):
     logger = logging.getLogger('image_captioning.val')
     dataset = cfg.DATASET.VAL
     vocab = get_vocab(dataset)
@@ -43,16 +45,22 @@ def val(cfg):
         beam_size,
         device
     )
+    now = datetime.datetime.now()
+    file_name = os.path.join(cfg.OUTPUT_DIR, "val-"+now.strftime("%Y%m%d-%H%M%S")+".json")
+    json.dump(predictions, open(file_name, 'w'))
+    logger.info("save results to {}".format(file_name))
     for metric, score in scores.items():
         logger.info(
             "metric {}: {:.4f}".format(
                 metric, score
             )
         )
-    for pred in predictions:
-        logger.info("image id:{}\ncaption:{}".format(
-            pred['image_id'], pred['caption']
-        ))
+    if verbose:
+        for pred in predictions:
+            logger.info("image id:{}\ncaption:{}".format(
+                pred['image_id'], pred['caption']
+            ))
+
 
 
 def main():
@@ -69,6 +77,11 @@ def main():
         help='Modify config options using the command-line',
         default=None,
         nargs=argparse.REMAINDER
+    )
+    parser.add_argument(
+        '--verbose',
+        help='show val results',
+        action='store_true'
     )
 
     args = parser.parse_args()
@@ -88,7 +101,7 @@ def main():
         with open(args.config_file, 'r') as cf:
             config_str = '\n' + cf.read()
             logger.info(config_str)
-    val(cfg)
+    val(cfg, args.verbose)
 
 
 if __name__ == '__main__':

@@ -1,6 +1,8 @@
 import argparse
 import os
 import logging
+import json
+import datetime
 
 import torch
 
@@ -97,7 +99,7 @@ def val(model, device):
     )
 
 
-def test(cfg, model):
+def test(cfg, model, verbose=False):
     logger = logging.getLogger("image_captioning.test")
     device = torch.device(cfg.MODEL.DEVICE)
     dataset_name = cfg.DATASET.TEST
@@ -117,14 +119,19 @@ def test(cfg, model):
         beam_size,
         device
     )
-    for prediction in predictions:
-        image_id = prediction['image_id']
-        caption = prediction['caption']
-        logger.info(
-            "image_id:{}\nsent:{}".format(
-                image_id, caption
+    if verbose:
+        for prediction in predictions:
+            image_id = prediction['image_id']
+            caption = prediction['caption']
+            logger.info(
+                "image_id:{}\nsent:{}".format(
+                    image_id, caption
+                )
             )
-        )
+    now = datetime.datetime.now()
+    file_name = os.path.join(cfg.OUTPUT_DIR, "test(train)-" + now.strftime("%Y%m%d-%H%M%S") + ".json")
+    json.dump(predictions, open(file_name, 'w'))
+    logger.info("save results to {}".format(file_name))
     for metric, score in scores.items():
         logger.info(
             "metirc {}, score: {:.4f}".format(
@@ -149,6 +156,11 @@ def main():
         action='store_true',
     )
     parser.add_argument(
+        '--verbose',
+        help="show test results",
+        action="store_true"
+    )
+    parser.add_argument(
         'opts',
         help='Modify config options using the command-line',
         default=None,
@@ -167,8 +179,8 @@ def main():
     logger = setup_logger('image_captioning', output_dir)
     logger.info(args)
 
-    #logger.info("Collecting env info (might take some time)")
-    #logger.info("\n" + collect_env_info())
+    logger.info("Collecting env info (might take some time)")
+    logger.info("\n" + collect_env_info())
 
     if args.config_file:
         logger.info("Loaded configuration file {}".format(args.config_file))
@@ -177,7 +189,7 @@ def main():
             logger.info(config_str)
     model = train(cfg)
     if not args.skip_test:
-        test(cfg, model)
+        test(cfg, model, args.verbose)
 
 
 if __name__ == '__main__':
