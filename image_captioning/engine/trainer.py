@@ -4,12 +4,33 @@ import time
 
 import torch
 import torch.nn as nn
+from torch import distributed as dist
+
 from image_captioning.utils.metric_logger import MetricLogger
 from image_captioning.config import cfg
 from image_captioning.modeling.utils import clip_gradients
 from image_captioning.modeling.utils import LanguageModelCriterion
 from image_captioning.modeling.utils import RewardCriterion
 from image_captioning.utils.rewards import get_self_critical_reward
+from image_captioning.utils.comm import get_world_size
+from image_captioning.utils.comm import is_main_process
+
+
+def reduce_loss(loss):
+    """
+    Reduce the loss dictionary from all processes so that process with rank
+    0 has the averaged results. Returns a dict with the same fields as
+    loss_dict, after reduction.
+    """
+    world_size =get_world_size()
+    if world_size < 2:
+        return loss
+    with torch.no_grad():
+        dist.reduce(loss, dst=0)
+        if dist.get_rank() == 0:
+            loss /= world_size
+    return loss
+
 
 
 def do_train(
@@ -28,9 +49,10 @@ def do_train(
 ):
     logger = logging.getLogger('image_captioning.trainer')
     logger.info("Start training")
-    meters = MetricLogger(
-        delimiter='  ', log_period=log_period, name=cfg.SOLVER.METRIC_LOGGER_NAME
-    )
+    if is_main_process():
+        meters = MetricLogger(
+            delimiter='  ', log_period=log_period, name=cfg.SOLVER.METRIC_LOGGER_NAME
+        )
     max_iter = len(train_data_loader)
     start_iter = arguments['iteration']
     model.train()
@@ -74,36 +96,37 @@ def do_train(
             loss = rl_criterion(
                 sample_seq_log_probs, rewards, sample_seqs, vocab
             )
-
+        loss_reduced = reduce_loss(loss)
         optimizer.zero_grad()
         loss.backward()
         clip_gradients(optimizer, cfg.SOLVER.GRAD_CLIP)
         optimizer.step()
 
         batch_time = time.time() - end
-        meters.update(loss=loss)
-        meters.update(batch_time=batch_time, data=data_time)
-        eta_seconds = meters.batch_time.global_avg * (max_iter - iteration)
-        eta_string = str(datetime.timedelta(seconds=int(eta_seconds)))
-        current_lr = optimizer.param_groups[0]['lr']
-        if iteration % log_period == 0 or iteration == max_iter:
-            logger.info(
-                meters.delimiter.join(
-                    [
-                        "eta: {eta}",
-                        "iter: {iter}",
-                        "{meters}",
-                        "lr: {lr:.6f}",
-                    ]
-                ).format(
-                    eta=eta_string,
-                    iter=iteration,
-                    meters=str(meters),
-                    lr=current_lr,
+        if is_main_process():
+            meters.update(loss=loss_reduced)
+            meters.update(batch_time=batch_time, data=data_time)
+            eta_seconds = meters.batch_time.global_avg * (max_iter - iteration)
+            eta_string = str(datetime.timedelta(seconds=int(eta_seconds)))
+            current_lr = optimizer.param_groups[0]['lr']
+            if iteration % log_period == 0 or iteration == max_iter:
+                logger.info(
+                    meters.delimiter.join(
+                        [
+                            "eta: {eta}",
+                            "iter: {iter}",
+                            "{meters}",
+                            "lr: {lr:.6f}",
+                        ]
+                    ).format(
+                        eta=eta_string,
+                        iter=iteration,
+                        meters=str(meters),
+                        lr=current_lr,
+                    )
                 )
-            )
-        meters.add_scalar('loss', loss.item(), iteration)
-        meters.add_scalar('lr', current_lr, iteration)
+            meters.add_scalar('loss', loss.item(), iteration)
+            meters.add_scalar('lr', current_lr, iteration)
         # save model and do evaluation
         if iteration % checkpoint_period == 0:
             arguments['save_last_checkpoint'] = True
@@ -112,10 +135,11 @@ def do_train(
         if iteration % val_period == 0:
             val_loss, predictions, scores = val_function(model, device)
             logger.info("validation loss:{:.4f}".format(val_loss))
-            meters.add_scalar('val_loss', val_loss, iteration)
-            for metric, score in scores.items():
-                logger.info("{}: {:.5f}".format(metric, score))
-                meters.add_scalar("metric/"+metric, score, iteration)
+            if is_main_process():
+                meters.add_scalar('val_loss', val_loss, iteration)
+                for metric, score in scores.items():
+                    logger.info("{}: {:.5f}".format(metric, score))
+                    meters.add_scalar("metric/"+metric, score, iteration)
             model.train()
             if scores['CIDEr'] > best_cider_score:
                 best_cider_score = scores['CIDEr']
