@@ -208,6 +208,7 @@ class Bottleneck(nn.Module):
             padding=1,
             bias=False,
             groups=num_roups,
+            dilation=dilation
         )
         self.bn2 = norm_func(bottleneck_channels)
 
@@ -229,8 +230,8 @@ class Bottleneck(nn.Module):
         out = self.bn2(out)
         out = F.relu_(out)
 
-        out = self.conv3(out)
-        out = self.bn3(out)
+        out0 = self.conv3(out)
+        out = self.bn3(out0)
 
         if self.downsample is not None:
             identity = self.downsample(x)
