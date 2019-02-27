@@ -116,7 +116,7 @@ def reduce_dict(input_dict, average=True):
             # world_size
             values /= world_size
         reduced_dict = {k: v for k, v in zip(names, values)}
-    return  reduced_dict
+    return reduced_dict
 
 
 

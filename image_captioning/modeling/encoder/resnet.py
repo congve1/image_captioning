@@ -17,6 +17,8 @@ from torch import nn
 from torch.nn import Conv2d, BatchNorm2d
 
 from image_captioning.utils.registry import Registry
+from image_captioning.layers.batch_norm import FrozenBatchNorm2d
+from image_captioning.modeling.make_layers import group_norm
 
 # ResNet sate specification
 StageSpec = namedtuple(
@@ -89,7 +91,7 @@ class ResNet(nn.Module):
                 stage_spec.block_count,
                 num_groups,
                 cfg.MODEL.RESNETS.STRIDE_IN_1X1,
-                first_stride = int(stage_spec.index > 1) + 1,
+                first_stride=int(stage_spec.index > 1) + 1,
             )
             in_channels = out_channels
             self.add_module(name, module)
@@ -102,6 +104,8 @@ class ResNet(nn.Module):
         self.att_size = cfg.MODEL.ENCODER.ATT_SIZE
     
     def _freeze_encoder(self, freeze_at):
+        if freeze_at < 0:
+            return
         for stage_index in range(freeze_at):
             if stage_index == 0:
                 m = self.stem
@@ -123,8 +127,6 @@ class ResNet(nn.Module):
         fc = outputs[-1].mean(3).mean(2)  # batch_size x features_dim
         return fc, att
 
-        
-
 
 def _make_stage(
     transformation_module,
@@ -134,7 +136,8 @@ def _make_stage(
     block_count,
     num_groups,
     stride_in_1x1,
-    first_stride
+    first_stride,
+    dilation=1
 ):
     blocks = []
     stride = first_stride
@@ -147,29 +150,41 @@ def _make_stage(
                 num_groups,
                 stride_in_1x1,
                 stride,
+                dilation=dilation
             )
         )
         stride = 1
         in_channels = out_channels
     return nn.Sequential(*blocks)
-class BottleneckWithBatchNorm(nn.Module):
+
+
+class Bottleneck(nn.Module):
     def __init__(
         self,
         in_channels,
         bottleneck_channels,
         out_channels,
-        num_roups=1,
-        stride_in_1x1=True,
-        stride=1,
+        num_roups,
+        stride_in_1x1,
+        stride,
+        dilation,
+        norm_func,
     ):
-        super(BottleneckWithBatchNorm, self).__init__()
+        super(Bottleneck, self).__init__()
         self.downsample = None
         if in_channels != out_channels:
+            down_stride = stride if dilation == 1 else 1
             self.downsample = nn.Sequential(
                 Conv2d(in_channels, out_channels, kernel_size=1, 
                        stride=stride, bias=False),
-                BatchNorm2d(out_channels),
+                norm_func(out_channels),
             )
+            for modules in [self.downsample,]:
+                for l in modules.modules():
+                    if isinstance(l, Conv2d):
+                        nn.init.kaiming_uniform_(l.weight, a=1)
+        if dilation > 1:
+            stride = 1 # reset to be 1
         # The original MSRA ResNet models have stride in the first 1x1 conv
         # The subsequent fb.torch.resnet and Caffe2 ResNe[X]t implementations have
         # stride in the 3x3 conv
@@ -182,7 +197,8 @@ class BottleneckWithBatchNorm(nn.Module):
             stride=stride_1x1,
             bias=False,
         )
-        self.bn1 = BatchNorm2d(bottleneck_channels)
+        self.bn1 = norm_func(bottleneck_channels)
+        # TODO: specify init for the above
 
         self.conv2 = Conv2d(
             bottleneck_channels,
@@ -193,15 +209,18 @@ class BottleneckWithBatchNorm(nn.Module):
             bias=False,
             groups=num_roups,
         )
-        self.bn2 = BatchNorm2d(bottleneck_channels)
+        self.bn2 = norm_func(bottleneck_channels)
 
         self.conv3 = Conv2d(
             bottleneck_channels, out_channels, kernel_size=1, bias=False
         )
-        self.bn3 = BatchNorm2d(out_channels)
+        self.bn3 = norm_func(out_channels)
+        for l in [self.conv1, self.conv2, self.conv3]:
+            nn.init.kaiming_uniform_(l.weight, a=1)
 
     def forward(self, x):
-        residual = x
+        identity = x
+
         out = self.conv1(x)
         out = self.bn1(out)
         out = F.relu_(out)
@@ -214,23 +233,27 @@ class BottleneckWithBatchNorm(nn.Module):
         out = self.bn3(out)
 
         if self.downsample is not None:
-            residual = self.downsample(x)
+            identity = self.downsample(x)
 
-        out += residual
+        out += identity
         out = F.relu_(out)
 
         return out
 
-class StemWithBatchNorm(nn.Module):
-    def __init__(self, cfg):
-        super(StemWithBatchNorm, self).__init__()
+
+class BaseStem(nn.Module):
+    def __init__(self, cfg, norm_func):
+        super(BaseStem, self).__init__()
 
         out_channels = cfg.MODEL.RESNETS.STEM_OUT_CHANNELS
 
         self.conv1 = Conv2d(
             3, out_channels, kernel_size=7, stride=2, padding=3, bias=False
         )
-        self.bn1 = BatchNorm2d(out_channels)
+        self.bn1 = norm_func(out_channels)
+
+        for l in [self.conv1, ]:
+            nn.init.kaiming_uniform_(l.weight, a=1)
 
     def forward(self, x):
         x = self.conv1(x)
@@ -239,12 +262,101 @@ class StemWithBatchNorm(nn.Module):
         x = F.max_pool2d(x, kernel_size=3, stride=2, padding=1)
         return x
 
+
+class BottleneckWithBatchNorm(Bottleneck):
+    def __init__(
+            self,
+            in_channels,
+            bottleneck_channels,
+            out_channels,
+            num_groups=1,
+            stride_in_1x1=True,
+            stride=1,
+            dilation=1,
+    ):
+        super(BottleneckWithBatchNorm, self).__init__(
+            in_channels=in_channels,
+            bottleneck_channels=bottleneck_channels,
+            out_channels=out_channels,
+            num_roups=num_groups,
+            stride_in_1x1=stride_in_1x1,
+            stride=stride,
+            dilation=dilation,
+            norm_func=BatchNorm2d
+        )
+
+
+class StemWithBatchNorm(BaseStem):
+    def __init__(self, cfg):
+        super(StemWithBatchNorm, self).__init__(cfg, norm_func=BatchNorm2d)
+
+
+class BottleneckWithFixedBatchNorm(Bottleneck):
+    def __init__(
+            self,
+            in_channels,
+            bottleneck_channels,
+            out_channels,
+            num_groups=1,
+            stride_in_1x1=True,
+            stride=1,
+            dilation=1,
+    ):
+        super(BottleneckWithFixedBatchNorm, self).__init__(
+            in_channels=in_channels,
+            bottleneck_channels=bottleneck_channels,
+            out_channels=out_channels,
+            num_roups=num_groups,
+            stride_in_1x1=stride_in_1x1,
+            stride=stride,
+            dilation=dilation,
+            norm_func=FrozenBatchNorm2d
+        )
+
+
+class StemWithFixedBatchNorm(BaseStem):
+    def __init__(self, cfg):
+        super(StemWithFixedBatchNorm, self).__init__(cfg, norm_func=FrozenBatchNorm2d)
+
+
+class BottleneckWithGN(Bottleneck):
+    def __init__(
+            self,
+            in_channels,
+            bottleneck_channels,
+            out_channels,
+            num_groups=1,
+            stride_in_1x1=True,
+            stride=1,
+            dilation=1,
+    ):
+        super(BottleneckWithGN, self).__init__(
+            in_channels=in_channels,
+            bottleneck_channels=bottleneck_channels,
+            out_channels=out_channels,
+            num_roups=num_groups,
+            stride_in_1x1=stride_in_1x1,
+            stride=stride,
+            dilation=dilation,
+            norm_func=group_norm
+        )
+
+
+class StemWithGN(BaseStem):
+    def __init__(self, cfg):
+        super(StemWithGN, self).__init__(cfg, norm_func=BatchNorm2d)
+
+
 _TRANSFORMATION_MODULES = Registry({
-    "BottleneckWithBatchNorm": BottleneckWithBatchNorm
+    "BottleneckWithBatchNorm": BottleneckWithBatchNorm,
+    "BottleneckWithFixedBatchNorm": BottleneckWithFixedBatchNorm,
+    "BottleneckWithGN": BottleneckWithGN,
 })
 
 _STEM_MODULES = Registry({
-    "StemWithBatchNorm": StemWithBatchNorm
+    "StemWithBatchNorm": StemWithBatchNorm,
+    "StemWithFixedBatchNorm": StemWithFixedBatchNorm,
+    "StemWithGN": StemWithGN
 })
 
 _STAGE_SPECS = Registry({

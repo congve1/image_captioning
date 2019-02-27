@@ -5,6 +5,9 @@ from torch.utils.model_zoo import _download_url_to_file
 from torch.utils.model_zoo import urlparse
 from torch.utils.model_zoo import HASH_REGEX
 
+from image_captioning.utils.comm import is_main_process
+from image_captioning.utils.comm import synchronize
+
 # very similar to https://github.com/pytorch./pytorch/blob/master/torch/utils/model_zoo.py
 # but with a few improvements and modifications
 def cache_url(url, model_dir=None, progress=True):
@@ -36,7 +39,7 @@ def cache_url(url, model_dir=None, progress=True):
         # so make the full path the file name by replacing / with _
         filename = filename.replace('/', '_')
     cached_file = os.path.join(model_dir, filename)
-    if not os.path.exists(cached_file):
+    if not os.path.exists(cached_file) and is_main_process():
         sys.stderr.write("Downloading: '{}' to {}\n".format(url, cached_file))
         hash_prefix = HASH_REGEX.search(filename)
         if hash_prefix is not None:
@@ -47,4 +50,5 @@ def cache_url(url, model_dir=None, progress=True):
             if len(hash_prefix) < 6:
                 hash_prefix = None
         _download_url_to_file(url, cached_file, hash_prefix, progress=progress)
+    synchronize()
     return cached_file

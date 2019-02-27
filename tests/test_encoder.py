@@ -11,16 +11,21 @@ from image_captioning.utils.checkpoint import ModelCheckpointer
 class TestResNet(unittest.TestCase):
     def test_create_model(self):
         for structure_name in ['R-50-C4', 'R-50-C5', 'R-101-C4', 'R-101-C5']:
-            cfg.merge_from_list(['MODEL.ENCODER.CONV_BODY', structure_name])
-            model = build_encoder(cfg)
-            dummy_input = torch.randn(1, 3, 224, 224)
-            fc, att = model(dummy_input)
-            relative_factor = int(structure_name[-1])   
-            out_channels = cfg.MODEL.RESNETS.STEM_OUT_CHANNELS * (2**relative_factor)
-            att_size = cfg.MODEL.ENCODER.ATT_SIZE
-            self.assertEqual(fc.size(), torch.Size((1,out_channels)))
-            self.assertEqual(att.size(), torch.Size((1,out_channels, 
-                                                     att_size, att_size)))
+            for bottleneck, stem in [('BottleneckWithBatchNorm', 'StemWithBatchNorm'),
+                                     ('BottleneckWithFixedBatchNorm', 'StemWithFixedBatchNorm'),
+                                     ('BottleneckWithGN', 'StemWithGN')]:
+                cfg.merge_from_list(['MODEL.ENCODER.CONV_BODY', structure_name,
+                                     'MODEL.RESNETS.TRANS_FUNC', bottleneck,
+                                     'MODEL.RESNETS.STEM_FUNC', stem])
+                model = build_encoder(cfg)
+                dummy_input = torch.randn(1, 3, 224, 224)
+                fc, att = model(dummy_input)
+                relative_factor = int(structure_name[-1])
+                out_channels = cfg.MODEL.RESNETS.STEM_OUT_CHANNELS * (2**relative_factor)
+                att_size = cfg.MODEL.ENCODER.ATT_SIZE
+                self.assertEqual(fc.size(), torch.Size((1,out_channels)))
+                self.assertEqual(att.size(), torch.Size((1,out_channels,
+                                                         att_size, att_size)))
 
     def test_load_model(self):
         paths_catalog = import_file(
