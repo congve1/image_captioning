@@ -8,6 +8,7 @@ from collections import defaultdict
 from image_captioning.config import cfg
 from image_captioning.utils.imports import import_file
 from image_captioning.utils.logger import setup_logger
+from image_captioning.utils.comm import get_rank
 from image_captioning.utils.get_vocab import get_vocab
 
 def precook(s, n=4, out=False):
@@ -117,7 +118,7 @@ def generate_ngrams(vocab):
             )
 
 def main():
-    logger = setup_logger("image_captioning")
+    logger = setup_logger('image_captioning', cfg.OUTPUT_DIR, get_rank(), "generating_ngrams_log.txt")
     vocab = get_vocab("coco_2014")
     parser = argparse.ArgumentParser()
     parser.add_argument(

@@ -16,12 +16,13 @@ from image_captioning.engine.inference import inference
 from image_captioning.modeling.decoder import build_decoder
 from image_captioning.utils.checkpoint import ModelCheckpointer
 from image_captioning.utils.get_vocab import get_vocab
-from image_captioning.utils.collect_env import  collect_env_info
+from image_captioning.utils.collect_env import collect_env_info
 from image_captioning.utils.logger import setup_logger
 from image_captioning.utils.miscellaneous import mkdir
 from image_captioning.modeling.utils import LanguageModelCriterion
 from image_captioning.utils.rewards import init_scorer
 from image_captioning.utils.imports import import_file
+from image_captioning.utils.comm import get_rank
 
 
 def train(cfg):
@@ -176,7 +177,7 @@ def main():
     output_dir = cfg.OUTPUT_DIR
     if output_dir:
         mkdir(output_dir)
-    logger = setup_logger('image_captioning', output_dir)
+    logger = setup_logger('image_captioning', output_dir, get_rank(), "training_log.txt")
     logger.info(args)
 
     logger.info("Collecting env info (might take some time)")

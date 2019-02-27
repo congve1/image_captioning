@@ -21,6 +21,7 @@ from image_captioning.modeling.encoder import build_encoder
 from image_captioning.utils.logger import setup_logger
 from image_captioning.data.transforms.build import build_transforms
 from image_captioning.utils.miscellaneous import encode_caption
+from image_captioning.utils.comm import get_rank
 from image_captioning.utils.miscellaneous import mkdir
 
 
@@ -40,7 +41,7 @@ def write_cache(env, cocoids, features):
 
 
 def create_input_files(args):
-    logger = setup_logger('image_captioning')
+    logger = setup_logger('image_captioning', cfg.OUTPUT_DIR, get_rank(), "creating_input_files_log.txt")
     logger.info("merge options from list {}".format(args.opts))
     if args.config_file:
         cfg.merge_from_file(args.config_file)

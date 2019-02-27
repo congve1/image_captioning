@@ -13,7 +13,8 @@ from image_captioning.modeling.decoder import build_decoder
 from image_captioning.data.transforms.build import  build_transforms
 from image_captioning.utils.miscellaneous import decode_sequence
 from image_captioning.utils.checkpoint import ModelCheckpointer
-from image_captioning.utils.logger import  setup_logger
+from image_captioning.utils.logger import setup_logger
+from image_captioning.utils.comm import get_rank
 from image_captioning.modeling.utils import cat
 
 
@@ -48,7 +49,7 @@ def main():
         cfg.merge_from_file(args.config_file)
     cfg.merge_from_list(args.opts)
     cfg.freeze()
-    logger = setup_logger("image_captioning")
+    logger = setup_logger("image_captioning", cfg.OUTPUT_DIR, get_rank(), "generate_online_results_log.txt")
     device = cfg.MODEL.DEVICE
     beam_size = cfg.TEST.BEAM_SIZE
     paths_catalog = import_file(

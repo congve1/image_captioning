@@ -9,11 +9,12 @@ from image_captioning.config import cfg
 from image_captioning.utils.imports import import_file
 from image_captioning.data.vocab import Vocab
 from image_captioning.utils.logger import setup_logger
+from image_captioning.utils.comm import get_rank
 from image_captioning.utils.miscellaneous import unicode_to_ascii
 
 
 def build_vocab():
-    logger = setup_logger("vocab")
+    logger = logging.getLogger("image_captioning")
     paths_catalog = import_file(
             'image_captioning.config.paths_catalog', cfg.PATHS_CATALOG, True
         )
@@ -70,7 +71,7 @@ if __name__ == "__main__":
         nargs=argparse.REMAINDER
     )
     args = parser.parse_args()
-    logger = setup_logger('image_captioning')
+    logger = setup_logger('image_captioning', cfg.OUTPUT_DIR, get_rank(), "vocab_log.txt")
     logger.info("merge options from list {}".format(args.opts))
     if args.config_file:
         cfg.merge_from_file(args.config_file)

@@ -17,6 +17,7 @@ from image_captioning.utils.checkpoint import ModelCheckpointer
 from image_captioning.utils.get_vocab import get_vocab
 from image_captioning.utils.collect_env import collect_env_info
 from image_captioning.utils.logger import setup_logger
+from image_captioning.utils.comm import get_rank
 from image_captioning.utils.miscellaneous import mkdir
 from image_captioning.modeling.utils import LanguageModelCriterion
 
@@ -89,7 +90,7 @@ def main():
     cfg.merge_from_list(args.opts)
     cfg.freeze()
 
-    logger = setup_logger('image_captioning')
+    logger = setup_logger('image_captioning', cfg.OUTPUT_DIR, get_rank(), "testing_log.txt")
     logger.info(args)
 
     logger.info("Collecting env info (might take some time)")
