@@ -3,6 +3,7 @@ import logging
 import torch.utils.data
 
 from image_captioning.utils.imports import import_file
+from image_captioning.utils.comm import get_world_size
 
 from . import datasets as D
 from . import samplers
@@ -35,7 +36,9 @@ def build_dataset(cfg, dataset_name, dataset_catalog, seq_per_img):
     return dataset
 
 
-def make_data_sampler(dataset, shuffle):
+def make_data_sampler(dataset, shuffle, distributed):
+    if distributed:
+        return samplers.DistributedSampler(dataset, shuffle=shuffle)
     if shuffle:
         sampler = torch.utils.data.RandomSampler(dataset)
     else:
@@ -56,14 +59,27 @@ def make_batch_data_sampler(
     return batch_sampler
 
 
-def make_data_loader(cfg, split='train', start_iter=0):
+def make_data_loader(cfg, split='train', start_iter=0, is_distributed=False):
+    num_gpus = get_world_size()
     if split == 'train':
         images_per_batch = cfg.SOLVER.IMS_PER_BATCH
+        assert (
+            images_per_batch % num_gpus == 0
+        ), "SOLVER.IMS_PER_BATCH ({}) must be divisible by the number of GPUs ({}) used".format(
+            images_per_batch, num_gpus
+        )
+        images_per_gpu = images_per_batch // num_gpus
         shuffle = True
         num_iters = cfg.SOLVER.MAX_ITER
     else:
         images_per_batch = cfg.TEST.IMS_PER_BATCH
-        shuffle = False
+        assert (
+            images_per_batch % num_gpus == 0
+        ), "SOLVER.IMS_PER_BATCH ({}) must be divisible by the number of GPUs ({}) used".format(
+            images_per_batch, num_gpus
+        )
+        images_per_gpu = images_per_batch // num_gpus
+        shuffle = False if not is_distributed else True
         num_iters = None
         start_iter = 0
 
@@ -79,9 +95,9 @@ def make_data_loader(cfg, split='train', start_iter=0):
     dataset_name = dataset_names[split]
     dataset = build_dataset(cfg, dataset_name, DatasetCatalog,
                             cfg.DATASET.SEQ_PER_IMG)
-    sampler = make_data_sampler(dataset, shuffle)
+    sampler = make_data_sampler(dataset, shuffle, is_distributed)
     batch_sampler = make_batch_data_sampler(
-        sampler, images_per_batch, num_iters, start_iter
+        sampler, images_per_gpu, num_iters, start_iter
     )
     num_workers = cfg.DATALOADER.NUM_WORKERS
     collator = BatchCollator()
