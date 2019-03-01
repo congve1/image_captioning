@@ -53,6 +53,7 @@ def do_train(
         meters = MetricLogger(
             delimiter='  ', log_period=log_period, name=cfg.SOLVER.METRIC_LOGGER_NAME
         )
+    distributed = get_world_size() > 1
     max_iter = len(train_data_loader)
     start_iter = arguments['iteration']
     model.train()
@@ -78,15 +79,16 @@ def do_train(
             outputs, att_weights = model(fc_features, att_features, captions)
             loss = criterion(outputs, captions[:, 1:], cap_lens+1)
         else:
+            sample_model = model.module if distributed else model
             sample_seqs,\
             sample_seq_log_probs,\
-            sample_att_weights = model.sample(
+            sample_att_weights = sample_model.sample(
                 fc_features, att_features
             )
             with torch.no_grad():
                 greed_seqs,\
                 greed_seqs_log_probs,\
-                greed_att_weights = model.greedy_search(
+                greed_att_weights = sample_model.greedy_search(
                     fc_features, att_features
                 )
                 rewards = get_self_critical_reward(
@@ -135,7 +137,6 @@ def do_train(
             checkpointer.save('model_{:07d}'.format(iteration), **arguments)
         # validate and save model
         if iteration % val_period == 0:
-            distributed = get_world_size() > 1
             val_model = model.module if distributed else model
             val_loss, predictions, scores = val_function(val_model, device, distributed)
             if is_main_process():
