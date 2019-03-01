@@ -5,9 +5,14 @@ import os
 
 import torch
 from tqdm import tqdm
+from torch import distributed as dist
 
 from image_captioning.utils.miscellaneous import decode_sequence
 from image_captioning.data.datasets.evaluation import coco_eval
+from image_captioning.utils.comm import get_world_size
+from image_captioning.utils.comm import synchronize
+from image_captioning.utils.comm import all_gather
+from image_captioning.utils.comm import is_main_process
 
 
 def compute_on_dataset(
@@ -44,6 +49,31 @@ def compute_on_dataset(
     return predictions, val_loss_sum / val_loss_count
 
 
+def reduce_loss(loss):
+    """
+    Reduce the loss dictionary from all processes so that process with rank
+    0 has the averaged results. Returns a dict with the same fields as
+    loss_dict, after reduction.
+    """
+    world_size =get_world_size()
+    if world_size < 2:
+        return loss
+    with torch.no_grad():
+        dist.reduce(loss, dst=0)
+        if dist.get_rank() == 0:
+            loss /= world_size
+    return loss
+
+
+def _accumulate_predictions_from_multiple_gpus(predictions_per_gpu):
+    all_predictions = all_gather(predictions_per_gpu)
+    if not is_main_process():
+        return
+    predictions = {}
+    for p in all_predictions:
+        predictions.update(p)
+    return predictions
+
 def inference(
         model,
         criterion,
@@ -54,6 +84,7 @@ def inference(
         device='cpu',
 ):
     device = torch.device(device)
+    num_devices = get_world_size()
     logger = logging.getLogger("image_captioning.inference")
     dataset = data_loader.dataset
     logger.info("Start evaluation on {} dataset({} images)".format(dataset_name, len(dataset)))
@@ -61,9 +92,13 @@ def inference(
     predictions, loss = compute_on_dataset(
         model, criterion, data_loader, vocab, beam_size, device, logger,
     )
-
+    loss_reduced = reduce_loss(loss)
+    synchronize()
+    predictions = _accumulate_predictions_from_multiple_gpus(predictions)
+    if not is_main_process():
+        return None, None, None
     metrics_score = coco_eval(predictions, dataset_name)
 
-    return loss, predictions, metrics_score
+    return loss_reduced, predictions, metrics_score
 
 

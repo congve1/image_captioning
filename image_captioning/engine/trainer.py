@@ -133,7 +133,9 @@ def do_train(
             checkpointer.save('model_{:07d}'.format(iteration), **arguments)
         # validate and save model
         if iteration % val_period == 0:
-            val_loss, predictions, scores = val_function(model, device)
+            distributed = get_world_size() > 1
+            val_model = val_model.module if distributed else model
+            val_loss, predictions, scores = val_function(val_model, device)
             logger.info("validation loss:{:.4f}".format(val_loss))
             if is_main_process():
                 meters.add_scalar('val_loss', val_loss, iteration)

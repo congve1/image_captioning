@@ -20,9 +20,10 @@ from image_captioning.utils.logger import setup_logger
 from image_captioning.utils.miscellaneous import mkdir
 from image_captioning.utils.comm import get_rank
 from image_captioning.modeling.utils import LanguageModelCriterion
+from image_captioning.utils.comm import synchronize
 
 
-def val(cfg, verbose=False):
+def val(cfg, verbose=False, distributed=False):
     logger = logging.getLogger('image_captioning.val')
     dataset = cfg.DATASET.VAL
     vocab = get_vocab(dataset)
@@ -79,6 +80,7 @@ def main():
         default=None,
         nargs=argparse.REMAINDER
     )
+    parser.add_argument('--local_rank', type=int, default=0)
     parser.add_argument(
         '--verbose',
         help='show val results',
@@ -86,12 +88,21 @@ def main():
     )
 
     args = parser.parse_args()
+    num_gpus = int(os.environ["WORLD_SIZE"]) if "WORLD_SIZE" in os.environ else 1
+    args.distributed = num_gpus > 1
+    if args.distributed:
+        torch.cuda.set_device(args.local_rank)
+        torch.distributed.init_process_group(
+            backend="nccl", init_method="env://"
+        )
+        synchronize()
     if args.config_file:
         cfg.merge_from_file(args.config_file)
     cfg.merge_from_list(args.opts)
     cfg.freeze()
 
     logger = setup_logger('image_captioning', cfg.OUTPUT_DIR, get_rank(), "validating_log.txt")
+    logger.info("Using {} GPUs.".format(num_gpus))
     logger.info(args)
 
     logger.info("Collecting env info (might take some time)")
@@ -102,7 +113,7 @@ def main():
         with open(args.config_file, 'r') as cf:
             config_str = '\n' + cf.read()
             logger.info(config_str)
-    val(cfg, args.verbose)
+    val(cfg, args.verbose, args.distributed)
 
 
 if __name__ == '__main__':

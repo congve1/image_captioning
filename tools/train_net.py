@@ -22,10 +22,10 @@ from image_captioning.utils.miscellaneous import mkdir
 from image_captioning.modeling.utils import LanguageModelCriterion
 from image_captioning.utils.rewards import init_scorer
 from image_captioning.utils.imports import import_file
-from image_captioning.utils.comm import get_rank
+from image_captioning.utils.comm import get_rank, synchronize
 
 
-def train(cfg):
+def train(cfg, local_rank, distributed):
     vocab = get_vocab(cfg.DATASET.TRAIN)
     paths_catalog = import_file(
             'image_captioning.config.paths_catalog', cfg.PATHS_CATALOG, True
@@ -41,7 +41,11 @@ def train(cfg):
 
     optimizer = make_optimizer(cfg, model)
     scheduler = make_lr_scheduler(cfg, optimizer)
-
+    if distributed:
+        model = torch.nn.parallel.DistributedDataParallel(
+            model, device_ids=[local_rank], output_device=local_rank,
+            broadcast_buffers=False
+        )
     arguments = dict()
     arguments['iteration'] = 0
     arguments['best_cider_score'] = -10000
@@ -56,7 +60,8 @@ def train(cfg):
 
     train_data_loader = make_data_loader(
         cfg,
-        start_iter=arguments['iteration']
+        start_iter=arguments['iteration'],
+        is_distributed=distributed
     )
 
     checkpoint_period = cfg.SOLVER.CHECKPOINT_PERIOD
@@ -100,7 +105,9 @@ def val(model, device):
     )
 
 
-def test(cfg, model, verbose=False):
+def test(cfg, model, verbose=False, distributed=False):
+    if distributed:
+        model = model.module
     logger = logging.getLogger("image_captioning.test")
     device = torch.device(cfg.MODEL.DEVICE)
     dataset_name = cfg.DATASET.TEST
@@ -108,7 +115,8 @@ def test(cfg, model, verbose=False):
     criterion = LanguageModelCriterion()
     test_data_loader = make_data_loader(
         cfg,
-        split='test'
+        split='test',
+        is_distributed=distributed
     )
     beam_size = cfg.TEST.BEAM_SIZE
     test_loss, predictions, scores = inference(
@@ -150,6 +158,7 @@ def main():
         help='path to config file',
         type=str,
     )
+    parser.add_argument('--local_rank', type=int, default=0)
     parser.add_argument(
         '--skip-test',
         dest='skip_test',
@@ -169,6 +178,14 @@ def main():
     )
 
     args = parser.parse_args()
+    num_gpus = int(os.environ["WORLD_SIZE"]) if "WORLD_SIZE" in os.environ else 1
+    args.distributed = num_gpus > 1
+    if args.distributed:
+        torch.cuda.set_device(args.local_rank)
+        torch.distributed.init_process_group(
+            backend="nccl", init_method="env://"
+        )
+        synchronize()
     if args.config_file:
         cfg.merge_from_file(args.config_file)
     cfg.merge_from_list(args.opts)
@@ -178,6 +195,7 @@ def main():
     if output_dir:
         mkdir(output_dir)
     logger = setup_logger('image_captioning', output_dir, get_rank(), "training_log.txt")
+    logger.info("Using {} GPUs.".format(num_gpus))
     logger.info(args)
 
     logger.info("Collecting env info (might take some time)")
@@ -188,9 +206,9 @@ def main():
         with open(args.config_file, 'r') as cf:
             config_str = '\n' + cf.read()
             logger.info(config_str)
-    model = train(cfg)
+    model = train(cfg, args.local_rank, args.distributed)
     if not args.skip_test:
-        test(cfg, model, args.verbose)
+        test(cfg, model, args.verbose, args.distributed)
 
 
 if __name__ == '__main__':
