@@ -19,7 +19,7 @@ from yacs.config import CfgNode as CN
 _C = CN()
 
 _C.MODEL = CN()
-_C.MODEL.DEVICE = "cuda:0"
+_C.MODEL.DEVICE = "cuda"
 _C.MODEL.META_ARCHITECTURE = "GeneralizedCaptionModel"
 
 # if the WEIGHT starts with a catalog://, like :R-50, the code will look for
