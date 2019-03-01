@@ -101,13 +101,13 @@ def make_data_loader(cfg, split='train', start_iter=0, is_distributed=False):
     )
     num_workers = cfg.DATALOADER.NUM_WORKERS
     collator = BatchCollator()
-    pin_memory = not(cfg.MODEL.DEVICE == 'cpu')
+    #pin_memory = not(cfg.MODEL.DEVICE == 'cpu')
     dataloader = torch.utils.data.dataloader.DataLoader(
         dataset,
         num_workers=num_workers,
         batch_sampler=batch_sampler,
         collate_fn=collator,
-        pin_memory=pin_memory,
+        #pin_memory=pin_memory,
     )
 
     return dataloader
