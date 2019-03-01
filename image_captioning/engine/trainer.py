@@ -135,8 +135,8 @@ def do_train(
         if iteration % checkpoint_period == 0:
             arguments['save_last_checkpoint'] = True
             checkpointer.save('model_{:07d}'.format(iteration), **arguments)
-        # validate and save model
-        if iteration % val_period == 0:
+        # validate and save model(now do not validate model during training)
+        if False and iteration % val_period == 0:
             val_model = model.module if distributed else model
             val_loss, predictions, scores = val_function(val_model, device, distributed)
             if is_main_process():
