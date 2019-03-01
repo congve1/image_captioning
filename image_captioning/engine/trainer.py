@@ -13,7 +13,7 @@ from image_captioning.modeling.utils import LanguageModelCriterion
 from image_captioning.modeling.utils import RewardCriterion
 from image_captioning.utils.rewards import get_self_critical_reward
 from image_captioning.utils.comm import get_world_size
-from image_captioning.utils.comm import is_main_process
+from image_captioning.utils.comm import is_main_process, get_rank
 
 
 def reduce_loss(loss):
@@ -113,12 +113,14 @@ def do_train(
                 logger.info(
                     meters.delimiter.join(
                         [
+                            "rank:{rank}",
                             "eta: {eta}",
                             "iter: {iter}",
                             "{meters}",
                             "lr: {lr:.6f}",
                         ]
                     ).format(
+                        rank=get_rank(),
                         eta=eta_string,
                         iter=iteration,
                         meters=str(meters),
@@ -134,7 +136,7 @@ def do_train(
         # validate and save model
         if iteration % val_period == 0:
             distributed = get_world_size() > 1
-            val_model = val_model.module if distributed else model
+            val_model = model.module if distributed else model
             val_loss, predictions, scores = val_function(val_model, device, distributed)
             logger.info("validation loss:{:.4f}".format(val_loss))
             if is_main_process():
