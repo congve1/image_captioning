@@ -24,7 +24,7 @@ class Checkpointer(object):
         self.save_dir = save_dir
         self.save_to_disk = save_to_disk
         if logger is None:
-            logger = logging.getLogger(__name__)
+            logger = logging.getLogger("image_captioning.utils.checkpoint")
         self.logger = logger
     
     def save(self, name, **kwargs):
