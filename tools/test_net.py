@@ -34,7 +34,8 @@ def test(cfg, verbose=False, distributed=False):
     decoder = decoder.to(device)
     test_data_loder = make_data_loader(
         cfg,
-        split='test'
+        split='test',
+        is_distributed=distributed
     )
     criterion = LanguageModelCriterion()
     beam_size = cfg.TEST.BEAM_SIZE

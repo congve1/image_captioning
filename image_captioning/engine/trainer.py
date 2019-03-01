@@ -135,7 +135,7 @@ def do_train(
         if iteration % val_period == 0:
             distributed = get_world_size() > 1
             val_model = val_model.module if distributed else model
-            val_loss, predictions, scores = val_function(val_model, device)
+            val_loss, predictions, scores = val_function(val_model, device, distributed)
             logger.info("validation loss:{:.4f}".format(val_loss))
             if is_main_process():
                 meters.add_scalar('val_loss', val_loss, iteration)

@@ -69,9 +69,13 @@ def _accumulate_predictions_from_multiple_gpus(predictions_per_gpu):
     all_predictions = all_gather(predictions_per_gpu)
     if not is_main_process():
         return
-    predictions = {}
+    predictions = []
+    image_ids = []
     for p in all_predictions:
-        predictions.update(p)
+        for entry in p:
+            if entry['image_id'] not in image_ids:
+                image_ids.append(entry['image_id'])
+                predictions.append(entry)
     return predictions
 
 def inference(

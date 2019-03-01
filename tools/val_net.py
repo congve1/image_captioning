@@ -34,7 +34,8 @@ def val(cfg, verbose=False, distributed=False):
     decoder = decoder.to(device)
     val_data_loder = make_data_loader(
         cfg,
-        split='val'
+        split='val',
+        is_distributed=distributed
     )
     criterion = LanguageModelCriterion()
     beam_size = cfg.TEST.BEAM_SIZE

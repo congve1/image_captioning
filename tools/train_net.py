@@ -85,13 +85,13 @@ def train(cfg, local_rank, distributed):
     return model
 
 
-def val(model, device):
+def val(model, device, distributed):
     dataset_name = cfg.DATASET.VAL
     vocab = get_vocab(dataset_name)
     val_data_loder = make_data_loader(
         cfg,
         split='val',
-
+        is_distributed=distributed
     )
     criterion = LanguageModelCriterion()
     return inference(
