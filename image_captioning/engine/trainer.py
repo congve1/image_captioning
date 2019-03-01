@@ -145,7 +145,7 @@ def do_train(
                     logger.info("{}: {:.5f}".format(metric, score))
                     meters.add_scalar("metric/"+metric, score, iteration)
             model.train()
-            if scores['CIDEr'] > best_cider_score:
+            if is_main_process() and scores['CIDEr'] > best_cider_score:
                 best_cider_score = scores['CIDEr']
                 arguments['best_cider_score'] = best_cider_score
                 logger.info("best cider score: {:.4f}".format(best_cider_score))
