@@ -96,7 +96,7 @@ def inference(
     predictions, loss = compute_on_dataset(
         model, criterion, data_loader, vocab, beam_size, device, logger,
     )
-    loss_reduced = reduce_loss(loss)
+    loss_reduced = reduce_loss(torch.tensor(loss).to(device))
     synchronize()
     predictions = _accumulate_predictions_from_multiple_gpus(predictions)
     if not is_main_process():
