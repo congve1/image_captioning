@@ -138,8 +138,8 @@ def do_train(
         # validate and save model(now do not validate model during training)
         if iteration % val_period == 0:
             val_model = model.module if distributed else model
+            val_loss, predictions, scores = val_function(val_model, device, distributed=distributed)
             if is_main_process():
-                val_loss, predictions, scores = val_function(val_model, device, distributed=False)
                 logger.info("validation loss:{:.4f}".format(val_loss))
                 meters.add_scalar('val_loss', val_loss, iteration)
                 for metric, score in scores.items():
