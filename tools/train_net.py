@@ -51,7 +51,7 @@ def train(cfg, local_rank, distributed):
     arguments['best_cider_score'] = -10000
 
     output_dir = cfg.OUTPUT_DIR
-    save_to_disk = True
+    save_to_disk = get_rank() == 0
     checkpointer = ModelCheckpointer(
         cfg, model, optimizer, scheduler, output_dir, save_to_disk
     )
