@@ -20,7 +20,7 @@ from image_captioning.utils.logger import setup_logger
 from image_captioning.utils.comm import get_rank
 from image_captioning.utils.miscellaneous import mkdir
 from image_captioning.modeling.utils import LanguageModelCriterion
-from image_captioning.utils.comm import synchronize
+from image_captioning.utils.comm import synchronize, is_main_process
 
 
 def test(cfg, verbose=False, distributed=False):
@@ -48,21 +48,22 @@ def test(cfg, verbose=False, distributed=False):
         beam_size,
         device
     )
-    now = datetime.datetime.now()
-    file_name = os.path.join(cfg.OUTPUT_DIR, "test-" + now.strftime("%Y%m%d-%H%M%S") + ".json")
-    json.dump(predictions, open(file_name, 'w'))
-    logger.info("save results to {}".format(file_name))
-    for metric, score in scores.items():
-        logger.info(
-            "metric {}: {:.4f}".format(
-                metric, score
+    if is_main_process():
+        now = datetime.datetime.now()
+        file_name = os.path.join(cfg.OUTPUT_DIR, "test-" + now.strftime("%Y%m%d-%H%M%S") + ".json")
+        json.dump(predictions, open(file_name, 'w'))
+        logger.info("save results to {}".format(file_name))
+        for metric, score in scores.items():
+            logger.info(
+                "metric {}: {:.4f}".format(
+                    metric, score
+                )
             )
-        )
-    if verbose:
-        for pred in predictions:
-            logger.info("image id:{}\ncaption:{}".format(
-                pred['image_id'], pred['caption']
-            ))
+        if verbose:
+            for pred in predictions:
+                logger.info("image id:{}\ncaption:{}".format(
+                    pred['image_id'], pred['caption']
+                ))
 
 
 def main():

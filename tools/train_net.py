@@ -22,7 +22,7 @@ from image_captioning.utils.miscellaneous import mkdir
 from image_captioning.modeling.utils import LanguageModelCriterion
 from image_captioning.utils.rewards import init_scorer
 from image_captioning.utils.imports import import_file
-from image_captioning.utils.comm import get_rank, synchronize
+from image_captioning.utils.comm import get_rank, synchronize, is_main_process
 
 
 def train(cfg, local_rank, distributed):
@@ -128,25 +128,26 @@ def test(cfg, model, verbose=False, distributed=False):
         beam_size,
         device
     )
-    if verbose:
-        for prediction in predictions:
-            image_id = prediction['image_id']
-            caption = prediction['caption']
+    if is_main_process():
+        if verbose:
+            for prediction in predictions:
+                image_id = prediction['image_id']
+                caption = prediction['caption']
+                logger.info(
+                    "image_id:{}\nsent:{}".format(
+                        image_id, caption
+                    )
+                )
+        now = datetime.datetime.now()
+        file_name = os.path.join(cfg.OUTPUT_DIR, "test(train)-" + now.strftime("%Y%m%d-%H%M%S") + ".json")
+        json.dump(predictions, open(file_name, 'w'))
+        logger.info("save results to {}".format(file_name))
+        for metric, score in scores.items():
             logger.info(
-                "image_id:{}\nsent:{}".format(
-                    image_id, caption
+                "metirc {}, score: {:.4f}".format(
+                    metric, score
                 )
             )
-    now = datetime.datetime.now()
-    file_name = os.path.join(cfg.OUTPUT_DIR, "test(train)-" + now.strftime("%Y%m%d-%H%M%S") + ".json")
-    json.dump(predictions, open(file_name, 'w'))
-    logger.info("save results to {}".format(file_name))
-    for metric, score in scores.items():
-        logger.info(
-            "metirc {}, score: {:.4f}".format(
-                metric, score
-            )
-        )
 
 
 def main():
