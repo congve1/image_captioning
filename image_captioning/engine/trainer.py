@@ -13,7 +13,7 @@ from image_captioning.modeling.utils import LanguageModelCriterion
 from image_captioning.modeling.utils import RewardCriterion
 from image_captioning.utils.rewards import get_self_critical_reward
 from image_captioning.utils.comm import get_world_size
-from image_captioning.utils.comm import is_main_process, get_rank
+from image_captioning.utils.comm import is_main_process, get_rank, synchronize
 
 
 def reduce_loss(loss):
@@ -136,23 +136,25 @@ def do_train(
             arguments['save_last_checkpoint'] = True
             checkpointer.save('model_{:07d}'.format(iteration), **arguments)
         # validate and save model(now do not validate model during training)
-        if False and iteration % val_period == 0:
+        if iteration % val_period == 0:
             val_model = model.module if distributed else model
-            val_loss, predictions, scores = val_function(val_model, device, distributed)
             if is_main_process():
+                val_loss, predictions, scores = val_function(val_model, device)
                 logger.info("validation loss:{:.4f}".format(val_loss))
                 meters.add_scalar('val_loss', val_loss, iteration)
                 for metric, score in scores.items():
                     logger.info("{}: {:.5f}".format(metric, score))
                     meters.add_scalar("metric/"+metric, score, iteration)
+                if scores['CIDEr'] > best_cider_score:
+                    best_cider_score = scores['CIDEr']
+                    arguments['best_cider_score'] = best_cider_score
+                    logger.info("best cider score: {:.4f}".format(best_cider_score))
+                    checkpointer.save(
+                        'model_best', save_last_checkpoint=False, best_cider_score=best_cider_score
+                    )
             model.train()
-            if is_main_process() and scores['CIDEr'] > best_cider_score:
-                best_cider_score = scores['CIDEr']
-                arguments['best_cider_score'] = best_cider_score
-                logger.info("best cider score: {:.4f}".format(best_cider_score))
-                checkpointer.save(
-                    'model_best', save_last_checkpoint=False, best_cider_score=best_cider_score
-                )
+            synchronize()
+
         if iteration == max_iter:
             checkpointer.save('model_final', **arguments)
         end = time.time()
