@@ -224,11 +224,12 @@ class Decoder(nn.Module):
                 beam_log_probs_sum[vix] = v['p']
             return beam_seq, beam_seq_log_probs, beam_seq_log_porbs_sum,\
                 new_hidden_states, new_att_weights, candidates
+        device = fc_feats.device
         hidden_states = self.init_hiddens(beam_size)
         locations = att_feats.numel() // att_feats.size(0) // att_feats.size(-1)
-        beam_seq = torch.zeros((beam_size, self.seq_length+1), dtype=torch.long)
-        beam_seq_log_probs = torch.zeros((beam_size, self.seq_length+1))
-        beam_log_probs_sum = torch.zeros(beam_size)
+        beam_seq = torch.zeros((beam_size, self.seq_length+1), dtype=torch.long).to(device)
+        beam_seq_log_probs = torch.zeros((beam_size, self.seq_length+1)).to(device)
+        beam_log_probs_sum = torch.zeros(beam_size).to(device)
         beam_att_weights = att_feats.new_zeros(
             beam_size,
             self.seq_length+1,
@@ -251,7 +252,7 @@ class Decoder(nn.Module):
             )
             log_probs = self.get_log_probs(outputs)
             # lets go to cpu for more efficiency in indexing operations
-            log_probs = log_probs.cpu().float()
+            log_probs = log_probs.clone().float()
             # supress UNK tokens in the decoding
             unk_idx = self.vocab['<unk>']
             log_probs[:, unk_idx] = log_probs[:, unk_idx] - 1000
