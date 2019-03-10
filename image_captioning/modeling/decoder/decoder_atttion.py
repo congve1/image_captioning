@@ -85,3 +85,35 @@ class DualAttention(nn.Module):
         return weighted_spatial_features,\
             weighted_channel_features,\
             weights_spatial
+
+
+@registry.DECODER_ATTENTIONS.register("ChannelAttention")
+class ChannelAttention(nn.Module):
+    def __init__(self, cfg):
+        super(ChannelAttention, self).__init__()
+        att_hid_size = cfg.MODEL.DECODER.ATT_HIDDEN_SIZE
+        hidden_size = cfg.MODEL.DECODER.HIDDEN_SIZE
+        att_size = cfg.MODEL.ENCODER.ATT_SIZE
+
+        self.channel2att = nn.Linear(att_size*att_size, att_hid_size)
+        self.h2att = nn.Linear(hidden_size, att_hid_size)
+        self.alpha_net = nn.Linear(att_hid_size, 1)
+
+    def forward(self, att_features, h):
+        # att_features: BxHxWxC
+        locations = att_features.numel()//att_features.size(0)//att_features.size(-1)
+        att_features = att_features.reshape((att_features.size(0), locations,
+                                             att_features.size(-1))).permute(0, 2, 1)
+        channel_att_features = self.channel2att(att_features)
+        p_h = self.h2att(h)
+        # match the dimension with p_att_features
+        p_h = p_h.unsqueeze(1)
+        weights = self.alpha_net(
+            torch.tanh(channel_att_features + p_h)
+        )
+        weights = weights.squeeze(2)
+        weights = F.softmax(weights, dim=1)
+        weighted_att_features = torch.bmm(
+            weights.unsqueeze(1), att_features
+        )
+        return weighted_att_features.squeeze(1), weights

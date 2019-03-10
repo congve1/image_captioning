@@ -75,7 +75,7 @@ class Decoder(nn.Module):
         fc_feats = self.fc_embed(fc_feats)
         hidden_states = self.init_hiddens(batch_size)
         outputs = fc_feats.new_zeros(batch_size, seq.size(1)-1, len(self.vocab))
-        weights = fc_feats.new_zeros(batch_size, seq.size(1)-1, locations)
+        weights = None
         for i in range(seq.size(1)-1):
             if self.training and self.ss_prob > 0.0 and i >= 1:
                 sample_prob = fc_feats.new(batch_size).uniform_(0, 1)
@@ -102,6 +102,8 @@ class Decoder(nn.Module):
             output, hidden_states, att_weights = self.core(
                xt, fc_feats, att_feats, hidden_states
             )
+            if weights is None:
+                weights = att_weights.new_zeros(batch_size, seq.size(1)-1, att_weights.size(-1))
             outputs[:, i] = output
             weights[:, i] = att_weights
         return outputs, weights
@@ -127,7 +129,7 @@ class Decoder(nn.Module):
         batch_size = fc_feats.size(0)
         att_feats = att_feats.permute(0, 2, 3, 1)
         locations = att_feats.numel() // att_feats.size(0) // att_feats.size(-1)
-        weights = fc_feats.new_zeros(batch_size, self.seq_length+1, locations)
+        weights = None
         fc_feats = self.fc_embed(fc_feats)
         att_feats = self.att_embed(att_feats)
         seq = fc_feats.new_zeros((batch_size, self.seq_length+1), dtype=torch.long)\
@@ -147,7 +149,10 @@ class Decoder(nn.Module):
             )
             seq[k, :] = done_beams[k][0]['seq'].to(self.device)# the first beam has highes cumulative score
             seq_log_probs[k, :] = done_beams[k][0]['logps'].to(self.device)
-            weights[k, :] = done_beams[k][0]['att_weights'].to(self.device)
+            att_weights = done_beams[k][0]['att_weights'].to(self.device)
+            if weights is None:
+                weights = att_weights.new_zeros(batch_size, self.seq_length+1, att_weights.size(-1))
+            weights[k, :] = att_weights
         return seq, seq_log_probs, weights
 
     def _beam_search(self, fc_feats, att_feats, beam_size):
@@ -230,11 +235,7 @@ class Decoder(nn.Module):
         beam_seq = torch.zeros((beam_size, self.seq_length+1), dtype=torch.long).to(device)
         beam_seq_log_probs = torch.zeros((beam_size, self.seq_length+1)).to(device)
         beam_log_probs_sum = torch.zeros(beam_size).to(device)
-        beam_att_weights = att_feats.new_zeros(
-            beam_size,
-            self.seq_length+1,
-            locations,
-        )
+        beam_att_weights = None
         done_beams = []
         for t in range(self.seq_length+1):
             """
@@ -250,6 +251,8 @@ class Decoder(nn.Module):
                 xt, fc_feats,
                 att_feats, hidden_states
             )
+            if beam_att_weights is None:
+                beam_att_weights = att_weights.new_zeros(beam_size, self.seq_length+1, att_weights.size(-1))
             log_probs = self.get_log_probs(outputs)
             # lets go to cpu for more efficiency in indexing operations
             log_probs = log_probs.clone().float()
@@ -295,7 +298,7 @@ class Decoder(nn.Module):
         batch_size = fc_feats.size(0)
         att_feats = att_feats.permute(0, 2, 3, 1)
         locations = att_feats.numel() // att_feats.size(0) // att_feats.size(-1)
-        weights = fc_feats.new_zeros(batch_size, self.seq_length+1, locations)
+        weights = None
         fc_feats = self.fc_embed(fc_feats)
         att_feats = self.att_embed(att_feats)
         hidden_states = self.init_hiddens(batch_size)
@@ -312,6 +315,8 @@ class Decoder(nn.Module):
             it = idxs.view(-1).long()
             seq[:, t] = it
             seq_log_probs[:, t] = sample_log_probs.view(-1)
+            if weights is None:
+                weights = att_weights.new_zeros(batch_size, self.seq_length+1, att_weights.size(-1))
             weights[:, t] = att_weights
             if self.is_all_sequences_end(it):
                 break
@@ -321,7 +326,7 @@ class Decoder(nn.Module):
         batch_size = fc_feats.size(0)
         att_feats = att_feats.permute(0, 2, 3, 1)
         locations = att_feats.numel() // att_feats.size(0) // att_feats.size(-1)
-        weights = fc_feats.new_zeros(batch_size, self.seq_length + 1, locations)
+        weights = None
         fc_feats = self.fc_embed(fc_feats)
         att_feats = self.att_embed(att_feats)
         hidden_states = self.init_hiddens(batch_size)
@@ -341,6 +346,8 @@ class Decoder(nn.Module):
             it = it.view(-1).long()
             seq[:, t] = it
             seq_log_probs[:, t] = sample_log_probs.view(-1)
+            if weights is None:
+                weights = att_weights.new_zeros(batch_size, self.seq_length+1, att_weights.size(-1))
             weights[:, t] = att_weights
             if self.is_all_sequences_end(it):
                 break
