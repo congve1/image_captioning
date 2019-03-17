@@ -208,6 +208,8 @@ class Baseline(nn.Module):
         self._init_weights()
 
     def forward(self, xt, fc_feats, att_feats, hidden_states):
+        att_feats = att_feats.mean(2).mean(1)
+        fc_feats = (fc_feats+att_feats-att_feats) # avoid distributed training error
         prev_h_lang = hidden_states[0][1]
         prec_c_lang = hidden_states[1][1]
         prev_h_att = hidden_states[0][0]
