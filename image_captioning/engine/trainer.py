@@ -76,19 +76,19 @@ def do_train(
         captions = data['captions'].to(device)
 
         if scst_iter == -1 or iteration <= scst_iter:
-            outputs, att_weights = model(fc_features, att_features, captions)
+            outputs, *_ = model(fc_features, att_features, captions)
             loss = criterion(outputs, captions[:, 1:], cap_lens+1)
         else:
             sample_model = model.module if distributed else model
             sample_seqs,\
             sample_seq_log_probs,\
-            sample_att_weights = sample_model.sample(
+            *_ = sample_model.sample(
                 fc_features, att_features
             )
             with torch.no_grad():
                 greed_seqs,\
                 greed_seqs_log_probs,\
-                greed_att_weights = sample_model.greedy_search(
+                *_ = sample_model.greedy_search(
                     fc_features, att_features
                 )
                 rewards = get_self_critical_reward(

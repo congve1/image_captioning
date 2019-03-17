@@ -4,9 +4,9 @@ import torch
 
 from image_captioning.config import cfg
 from image_captioning.utils.get_vocab import get_vocab
-from image_captioning.modeling.decoder import build_decoder
-from image_captioning.modeling.decoder import build_decoder_core
-from image_captioning.modeling.decoder import build_decoder_attention
+from image_captioning.modeling.decoder.build import build_decoder
+from image_captioning.modeling.decoder.decoder_core import build_decoder_core
+from image_captioning.modeling.decoder.decoder_atttion import build_decoder_attention
 
 
 class TestDecoder(unittest.TestCase):

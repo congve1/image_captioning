@@ -9,8 +9,8 @@ from image_captioning.config import cfg
 from image_captioning.utils.imports import import_file
 from image_captioning.utils.get_vocab import get_vocab
 from image_captioning.modeling.encoder import build_encoder
-from image_captioning.modeling.decoder import build_decoder
-from image_captioning.data.transforms.build import  build_transforms
+from image_captioning.modeling.decoder.build import build_decoder
+from image_captioning.data.transforms.build import build_transforms
 from image_captioning.utils.miscellaneous import decode_sequence
 from image_captioning.utils.checkpoint import ModelCheckpointer
 from image_captioning.utils.logger import setup_logger

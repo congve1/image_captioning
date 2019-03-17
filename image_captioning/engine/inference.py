@@ -32,12 +32,12 @@ def compute_on_dataset(
             captions = data['captions'].to(device)
             cap_lens = data['cap_lens'].to(device)
             cocoids = data['cocoids']
-            outputs, weights = model(fc_features, att_fatures, captions)
+            outputs, *_ = model(fc_features, att_fatures, captions)
             loss = criterion(outputs, captions[:, 1:], cap_lens+1)
             val_loss = loss.item()
             val_loss_count += 1
             val_loss_sum += val_loss
-            seqs, seq_log_probs, weights = model.decode_search(
+            seqs, seq_log_probs, *_ = model.decode_search(
                 fc_features, att_fatures, beam_size=beam_size
             )
             sents = decode_sequence(vocab, seqs)

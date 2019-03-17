@@ -75,6 +75,7 @@ _C.MODEL.ENCODER.FEATURE_SIZE = 2048
 # Decoder options
 # ------------------------------------------------------------------------------
 _C.MODEL.DECODER = CN()
+_C.MODEL.DECODER.ARCH = "TopDown"
 _C.MODEL.DECODER.CORE = 'TopDownCore'
 _C.MODEL.DECODER.ATTENTION = "TopDownAttention"
 # word embedding size

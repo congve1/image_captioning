@@ -12,7 +12,7 @@ from image_captioning.solver import make_optimizer
 from image_captioning.solver import make_lr_scheduler
 from image_captioning.engine.trainer import do_train
 from image_captioning.engine.inference import inference
-from image_captioning.modeling.decoder import build_decoder
+from image_captioning.modeling.decoder.build import build_decoder
 from image_captioning.utils.checkpoint import ModelCheckpointer
 from image_captioning.utils.get_vocab import get_vocab
 from image_captioning.utils.collect_env import collect_env_info

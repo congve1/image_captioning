@@ -4,6 +4,15 @@ import torch.nn.functional as F
 from image_captioning.modeling import registry
 
 
+def build_decoder_attention(cfg, att=None):
+    att_name = cfg.MODEL.DECODER.ATTENTION if att is None else att
+    assert att_name in registry.DECODER_ATTENTIONS, \
+        "DECODER.ATTENTION: {} is not registered in registry".format(
+            att_name
+        )
+    return registry.DECODER_ATTENTIONS[att_name](cfg)
+
+
 @registry.DECODER_ATTENTIONS.register("TopDownAttention")
 class TopDownAttention(nn.Module):
     def __init__(self, cfg):
@@ -35,6 +44,7 @@ class TopDownAttention(nn.Module):
             weights.unsqueeze(1), att_features
         )
         return weighted_att_features.squeeze(1), weights
+
 
 @registry.DECODER_ATTENTIONS.register('DualAttention')
 class DualAttention(nn.Module):

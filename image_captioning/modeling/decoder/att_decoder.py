@@ -6,9 +6,9 @@ from image_captioning.utils.constant import epsilon
 from .decoder_core import build_decoder_core
 
 
-class Decoder(nn.Module):
+class AttDecoder(nn.Module):
     def __init__(self, cfg, vocab):
-        super(Decoder, self).__init__()
+        super(AttDecoder, self).__init__()
         self.vocab = vocab
         self.device = cfg.MODEL.DEVICE
         self.num_layers = 2
@@ -35,7 +35,7 @@ class Decoder(nn.Module):
             nn.ReLU(inplace=True),
             nn.Dropout(self.dropout_prob)
         )
-        self.core = build_decoder_core(cfg, vocab)
+        #self.core = build_decoder_core(cfg, vocab)
 
     def init_hiddens(self, batch_size):
         weight = next(self.parameters())

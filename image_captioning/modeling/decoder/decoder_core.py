@@ -3,7 +3,16 @@ import torch.nn as nn
 from torch.nn import functional as F
 from image_captioning.modeling.utils import cat
 from image_captioning.modeling import registry
-from image_captioning.modeling.decoder.build import build_decoder_attention
+from image_captioning.modeling.decoder.decoder_atttion import build_decoder_attention
+
+
+def build_decoder_core(cfg, vocab, core=None):
+    core_name = cfg.MODEL.DECODER.CORE if core is None else core
+    assert core_name in registry.DECODER_CORES,\
+        "DECODER.CORE: {} is not registered in registry".format(
+            core_name
+    )
+    return registry.DECODER_CORES[core_name](cfg, vocab)
 
 
 @registry.DECODER_CORES.register("TopDownCore")
@@ -21,7 +30,7 @@ class TopDownCore(nn.Module):
             hidden_size * 2, hidden_size
         )
         self.logit = nn.Linear(hidden_size, len(vocab))
-        self.attention = build_decoder_attention(cfg)
+        self.attention = build_decoder_attention(cfg, "TopDownAttention")
         self.filter_h = nn.Sequential(
             nn.Conv1d(1, 1, 3, padding=1),
             nn.ReLU(inplace=True),
@@ -83,7 +92,7 @@ class ConvHiddenCore(nn.Module):
             nn.Conv1d(1, 1, 3, padding=1),
             nn.ReLU(inplace=True),
         )
-        self.attention = build_decoder_attention(cfg)
+        self.attention = build_decoder_attention(cfg, "DualAttention")
         self._init_weights()
 
     def forward(self, xt, fc_feats, att_feats, hidden_states):
@@ -143,7 +152,7 @@ class ChannelCore(nn.Module):
             nn.Conv1d(1, 1, 3, padding=1),
             nn.ReLU(inplace=True),
         )
-        self.attention = build_decoder_attention(cfg)
+        self.attention = build_decoder_attention(cfg, "ChannelAttention")
         self._init_weights()
 
     def forward(self, xt, fc_feats, att_feats, hidden_states):
@@ -196,7 +205,6 @@ class Baseline(nn.Module):
             hidden_size, hidden_size
         )
         self.logit = nn.Linear(hidden_size, len(vocab))
-        self.attention = build_decoder_attention(cfg)
         self._init_weights()
 
     def forward(self, xt, fc_feats, att_feats, hidden_states):
@@ -208,7 +216,6 @@ class Baseline(nn.Module):
         next_h_att, next_c_att= self.att_lstm(
             input_att_lstm, (prev_h_att, prev_c_att)
         )
-        weighted_channel_features, att_weights = self.attention(att_feats, next_h_att)
         input_lang_lstm = next_h_att
         next_h_lang, next_c_lang = self.lang_lstm(
             input_lang_lstm, (prev_h_lang, prec_c_lang)
@@ -219,7 +226,7 @@ class Baseline(nn.Module):
             torch.stack([next_h_att, next_h_lang]),
             torch.stack([next_c_att, next_c_lang])
         )
-        return output, hidden_states, att_weights
+        return output, hidden_states
 
     def _init_weights(self):
         """
